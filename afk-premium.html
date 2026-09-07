@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AFK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#07070b;color:#F6EFE0;font-family:'Unbounded',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;text-align:center;padding:20px}
+h1{font-size:clamp(90px,24vw,320px);font-weight:900;line-height:1;letter-spacing:-.03em;background:linear-gradient(180deg,#FFFBEA,#E8C47A 45%,#8A6A1F 60%,#FFF2C8);-webkit-background-clip:text;background-clip:text;color:transparent}
+#timer{font-size:clamp(18px,4vw,32px);letter-spacing:.1em;opacity:.9}
+.row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+button{cursor:pointer;font-family:inherit;font-size:15px;letter-spacing:.12em;text-transform:uppercase;padding:16px 38px;border-radius:100px;border:1px solid rgba(255,255,255,.2);background:#fff;color:#111}
+button.gold{background:linear-gradient(180deg,#FFF6D0,#E8C47A);border:0}
+button:focus-visible{outline:2px solid #E8C47A;outline-offset:4px}
+@media(prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+<h1>AFK</h1>
+<div id="timer">00:00</div>
+<div class="row">
+<button class="gold" id="startBtn" type="button">Старт</button>
+<button id="stopBtn" type="button">Стоп</button>
+</div>
+<script>
+let s=0,t=null;
+const el=document.getElementById('timer');
+const pad=n=>String(n).padStart(2,'0');
+function draw(){el.textContent=pad(Math.floor(s/60))+':'+pad(s%60)}
+function start(){if(t)return;t=setInterval(()=>{s++;draw()},1000)}
+function stop(){clearInterval(t);t=null}
+document.getElementById('startBtn').onclick=start;
+document.getElementById('stopBtn').onclick=stop;
+draw();
+</script>
+</body>
+</html>

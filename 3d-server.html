@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1a1e">
+<title>Steve 3D — file skin (исправлено)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@500;600&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1a1a1e;color:#fff;font-family:"Inter",system-ui,sans-serif;overflow:hidden}
+  canvas{display:block;touch-action:none}
+  .ui{position:fixed;top:12px;left:12px;background:#2b2b2b;padding:12px 14px;border:2px solid #000;box-shadow:inset -2px -2px 0 #555, inset 2px 2px 0 #FFF, 0 6px 18px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px;z-index:10;max-width:300px}
+  .ui h1{font-family:"Press Start 2P",monospace;font-size:11px}
+  .ui small{opacity:.7;font-size:11px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{background:#3a3a3a;color:#fff;border:1px solid #555;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px}
+  .btn.active{background:#4CAF50;border-color:#4CAF50}
+  .btn:hover{background:#444}
+  .hint{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);padding:6px 12px;border-radius:999px;font-size:11px}
+</style>
+<script src="./libs/es-module-shims.js"></script>
+<script type="importmap">{"imports":{"three":"./libs/three.module.js","three/addons/controls/OrbitControls.js":"./libs/OrbitControls.js"}}</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui">
+  <h1>Steve 3D — file skin</h1>
+  <small>Загрузка из ./steve-2d-skin.png • Кликни для паузы</small>
+  <div class="row">
+    <button id="btnRotate" class="btn active">Авто вращение</button>
+    <button id="btnWalk" class="btn active">Ходьба</button>
+    <button id="btnRun" class="btn">Бег</button>
+    <button id="btnPause" class="btn">Пауза</button>
+  </div>
+  <div class="row">
+    <button id="btnReset" class="btn">Сброс камеры</button>
+    <button id="btnWire" class="btn">Сетка</button>
+    <a href="3d.html" class="btn" style="text-decoration:none">→ Команды</a>
+  </div>
+  <small id="status">Статус: загрузка…</small>
+</div>
+<div class="hint">ЛКМ — вращать • Колесо — зум • file:// → открой через http://localhost:8000/3d-server.html</div>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+const canvas=document.getElementById('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, innerWidth<640?1.5:2));
+renderer.setSize(innerWidth,innerHeight);
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x1a1a1e);
+const camera=new THREE.PerspectiveCamera(60, innerWidth/innerHeight,0.1,1000); camera.position.set(20,16,28);
+const controls=new OrbitControls(camera,renderer.domElement); controls.target.set(0,10,0); controls.enableDamping=true; controls.dampingFactor=0.22;
+controls.mouseButtons={LEFT:THREE.MOUSE.ROTATE, MIDDLE:THREE.MOUSE.DOLLY, RIGHT:THREE.MOUSE.PAN};
+controls.touches={ONE:THREE.TOUCH.ROTATE, TWO:THREE.TOUCH.DOLLY_PAN};
+scene.add(new THREE.AmbientLight(0xffffff,1.05));
+const dir=new THREE.DirectionalLight(0xffffff,.9); dir.position.set(18,28,18); scene.add(dir);
+const dir2=new THREE.DirectionalLight(0xffffff,.32); dir2.position.set(-18,10,-18); scene.add(dir2);
+const statusEl=document.getElementById('status');
+let steve=null; let isInteracting=false;
+controls.addEventListener('start',()=>isInteracting=true);
+controls.addEventListener('end',()=>setTimeout(()=>isInteracting=false,120));
+const skinB64="iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAL60lEQVR4Xu2aS2yVxxXHYddiSCFq1QiSgEKaUJLKTZNNiNrS0jQ0qkDYvGzAgA0YDLbBvBsqURo1oZXarrKIjCp1WbWrvhZV6C57qHiDASEkEOL9fk7v74z/351v7nf93WsuLo18pKOZb+bMmfOa+eY1YkQOTH1hjANffu5LlioPThxb5za/Vz8gxvyqhc7OTrd27Vq3Zs0aQ/Lr1q1zlIOLFy92y5YtS+qFlFEX8yvCyLggG6Rw/cSvGIYGAFGyY/q33a8a30pSsFYGaG9vdytWrDCFWlpaDFtbWx3lGAMlZYQQVe65VKhsFqCwlH9lfF1ZA0yePDmFlNXCAB0dHebp7u7uAna5rq4uiwAh31I2RupiflWDvJ8eBqOTsidtgA0bNpgiq1evNs8uWrTILVmyxK1atcrKZYB58+alsGYGUASQvjJ+lGE4HMob4I0cA1QWloxnPE0EoBDfKM8QIK+y2ACqi/lVDZr4YuXzDNAw5dUcA1QGeH7lypVu6dKl5v3m5mbLMzR6enoGVHKguopByqPwN58fbfmJY/13aIBSzIqAyrweAt5nsgNRWuN+/fr1ZoCYvuaAklI8REVG+MvLwphftaAQZ+bH8yB5hgHREdNXDVMmjHIgSr06oc6U/c7kse5bkzzWTxrjXnvRzwNTnq+ziRBayjCA6GhDW3hQL74yVLl1BApu2rTJcPv27Yb6RvGZM2caauzrPx+Wl2uvSTKs2759W0LT1dXtUgYAX3/xGVMEBd98eZylQr5/OPVZ9/2pXzM6DCIa2lAmPqEBBlpHNDQ0GM6ePdvNmTPHxjjfCM7vDyWvfe76f4MeMQRl1EETKhoqLmPBT3W+r1lJXyNM6Oe817ziBcUm4Gl9j3H/2L3OffbbHvf5JzvdZ7/pKeQ3uT9vaXZvfeNZo4GWNrRNhkuBJ7xRuLiOKBpEGK7i0oL73x7KonQxZv08Qpl+jaKPFdeiKOQd0lDnI2B8IZRfeMZ7dYIfCuTrXxrn/vTzdve3DzsL6Sr3l52drrdnsfvX7h7Xu+anhvUvjTVa2tCWPLzgyXf2OkK/1tGp1ZsE18pPBigqn4ZQSdpgBLyKd4moOLLCiACLBkiGwWg3+etfdh8tnOZ6295106Z81ZQHGr672/39g3ZTnjyAUaCBlja0hUfIs6hs6a+UsnApGxsgey2f/pOorTdAeh9Qynt1CU2/AerMYz5sx7kPG95wnyz9gfu4+e2Ccj92f/2g1f1zV0/yi9v78Tr3x4733M7Cmh8aaGlDW3jI+zJAlvIyQOilygyQhiwDyMMygL7DOvVpcwCCEratM+rdno7Z7tO2HyUbmt+3zCgoON1NnzTKffT+NEPyv2v5nvtF49tGAy1taAsPGwL9w0HKp9cRdWUjQMqz3I2VzYaRI6ANjVA+AoqYGFi7Nynd2z7TPPrrpnfcppn1rvvd113njNdM6RB/Oe8d97NZbxoNtH9Y/RNr++mK933az0+GVAQIZbhQSBQAK1e+CHEUyPPFOWBRKgLKRhgrrC1btjg2IeQPHjzojh075o4cOeJOnz6du7KjLSs0Vm2acSnTd159zC8GJkVWg9CTFzx69MjduHEjt72HUrkTQDgsuW3bNkMUxwAHDhxwp06dyu0AJaSMNjB+zd5dENz/s7Pr/TY3za1UUGi0DAZR/P79+4khYvosHkXIqNu1a5ctLnbs2GEWRvmjR4+6ffv2uePHj2d0kAaUQzF5GV4SeuPGjVY2UH3MLwZ5XojX79275+7evetu376d2z4XEI6xsnnzZhOor6/PnTx50h06dMidOHEitwNtWEhpv3XrVvMumxmUzKuP+cVAG0UOeO3atcT72REgyPA2EJ6uSDBWWPqmM5aQzAnkqUdQndXhSc0Z0OsAA7pbt26Zh3Smp7D1dOuT/qgjLzrKxFvKwpd+li9f3n8";
+const fallbackUri="data:image/png;base64,"+skinB64;
+function build(tex){
+  function face(sx,sy,w,h){ const c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d'); g.imageSmoothingEnabled=false; g.drawImage(tex.image,sx,sy,w,h,0,0,w,h); const t=new THREE.CanvasTexture(c); t.magFilter=THREE.NearestFilter; t.minFilter=THREE.NearestFilter; t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=16; return t; }
+  const grp=new THREE.Group();
+  const head=new THREE.Mesh(new THREE.BoxGeometry(8,8,8),[new THREE.MeshLambertMaterial({map:face(16,8,8,8)}),new THREE.MeshLambertMaterial({map:face(0,8,8,8)}),new THREE.MeshLambertMaterial({map:face(8,0,8,8)}),new THREE.MeshLambertMaterial({map:face(24,0,8,8)}),new THREE.MeshLambertMaterial({map:face(8,8,8,8)}),new THREE.MeshLambertMaterial({map:face(24,8,8,8)})]); head.position.y=22; grp.add(head);
+  const body=new THREE.Mesh(new THREE.BoxGeometry(8,12,4),[new THREE.MeshLambertMaterial({map:face(16,20,4,12)}),new THREE.MeshLambertMaterial({map:face(28,20,4,12)}),new THREE.MeshLambertMaterial({map:face(20,16,8,4)}),new THREE.MeshLambertMaterial({map:face(28,16,8,4)}),new THREE.MeshLambertMaterial({map:face(20,20,8,12)}),new THREE.MeshLambertMaterial({map:face(32,20,8,12)})]); body.position.y=12; grp.add(body);
+  const armG=new THREE.BoxGeometry(4,12,4);
+  const rArm=new THREE.Mesh(armG,[new THREE.MeshLambertMaterial({map:face(40,20,4,12)}),new THREE.MeshLambertMaterial({map:face(48,20,4,12)}),new THREE.MeshLambertMaterial({map:face(44,16,4,4)}),new THREE.MeshLambertMaterial({map:face(48,16,4,4)}),new THREE.MeshLambertMaterial({map:face(44,20,4,12)}),new THREE.MeshLambertMaterial({map:face(52,20,4,12)})]); rArm.position.set(-6,12,0); grp.add(rArm);
+  const lArm=new THREE.Mesh(armG,[new THREE.MeshLambertMaterial({map:face(32,52,4,12)}),new THREE.MeshLambertMaterial({map:face(40,52,4,12)}),new THREE.MeshLambertMaterial({map:face(36,48,4,4)}),new THREE.MeshLambertMaterial({map:face(40,48,4,4)}),new THREE.MeshLambertMaterial({map:face(36,52,4,12)}),new THREE.MeshLambertMaterial({map:face(44,52,4,12)})]); lArm.position.set(6,12,0); grp.add(lArm);
+  const legG=new THREE.BoxGeometry(4,12,4);
+  const rLeg=new THREE.Mesh(legG,[new THREE.MeshLambertMaterial({map:face(0,20,4,12)}),new THREE.MeshLambertMaterial({map:face(8,20,4,12)}),new THREE.MeshLambertMaterial({map:face(4,16,4,4)}),new THREE.MeshLambertMaterial({map:face(8,16,4,4)}),new THREE.MeshLambertMaterial({map:face(4,20,4,12)}),new THREE.MeshLambertMaterial({map:face(12,20,4,12)})]); rLeg.position.set(-2,0,0); grp.add(rLeg);
+  const lLeg=new THREE.Mesh(legG,[new THREE.MeshLambertMaterial({map:face(16,52,4,12)}),new THREE.MeshLambertMaterial({map:face(24,52,4,12)}),new THREE.MeshLambertMaterial({map:face(20,48,4,4)}),new THREE.MeshLambertMaterial({map:face(24,48,4,4)}),new THREE.MeshLambertMaterial({map:face(20,52,4,12)}),new THREE.MeshLambertMaterial({map:face(28,52,4,12)})]); lLeg.position.set(2,0,0); grp.add(lLeg);
+  scene.add(grp); steve=grp;
+  const gnd=new THREE.Mesh(new THREE.PlaneGeometry(70,70), new THREE.MeshLambertMaterial({color:0x2b2b2b})); gnd.rotation.x=-Math.PI/2; gnd.position.y=-6.1; scene.add(gnd);
+  const grid=new THREE.GridHelper(70,14,0x444444,0x2e2e2e); grid.position.y=-6; scene.add(grid);
+  let phase=0; let autoRotate=true, mode='walk';
+  const btnRotate=document.getElementById('btnRotate'), btnWalk=document.getElementById('btnWalk'), btnRun=document.getElementById('btnRun'), btnPause=document.getElementById('btnPause');
+  function setActive(){ btnRotate.classList.toggle('active',autoRotate); btnWalk.classList.toggle('active',mode==='walk'&&!btnPause.classList.contains('active')); btnRun.classList.toggle('active',mode==='run'&&!btnPause.classList.contains('active')); }
+  btnRotate.onclick=()=>{ autoRotate=!autoRotate; setActive(); };
+  btnWalk.onclick=()=>{ mode='walk'; btnPause.classList.remove('active'); setActive(); };
+  btnRun.onclick=()=>{ mode='run'; btnPause.classList.remove('active'); setActive(); };
+  btnPause.onclick=()=>{ btnPause.classList.toggle('active'); setActive(); };
+  document.getElementById('btnReset').onclick=()=>{ camera.position.set(20,16,28); controls.target.set(0,10,0); controls.update(); };
+  let wire=false; document.getElementById('btnWire').onclick=(e)=>{ wire=!wire; e.currentTarget.classList.toggle('active',wire); grp.traverse(o=>{ if(o.isMesh) o.material.wireframe=wire; }); };
+  renderer.setAnimationLoop(()=>{ controls.update(); if(steve){ if(autoRotate && !isInteracting) steve.rotation.y+=0.006; if(!btnPause.classList.contains('active')){ phase+= mode==='run'?0.18: mode==='walk'?0.09:0; const s=Math.sin(phase); grp.traverse(o=>{ if(o.isMesh){ if(o.position.y>8 && Math.abs(o.position.x)>1){ const isR=o.position.x<0; o.rotation.x=s*(mode==='run'?1.0:0.55)*(isR?1:-1); } else if(o.position.y<2){ const isR=o.position.x<0; o.rotation.x=s*(mode==='run'?0.9:0.45)*(isR?-1:1); } } }); if(mode!=='pause') steve.position.y=Math.abs(s)*0.2; } } renderer.render(scene,camera); });
+  statusEl.textContent='Статус: готово ✓';
+}
+const loader=new THREE.TextureLoader();
+// Try real file first, fallback to embedded
+loader.load('./steve-2d-skin.png', tex=>{
+  tex.magFilter=THREE.NearestFilter; tex.minFilter=THREE.NearestFilter; tex.colorSpace=THREE.SRGBColorSpace; build(tex);
+  statusEl.textContent='Статус: загружен steve-2d-skin.png ✓';
+}, undefined, err=>{
+  console.warn('file skin failed, fallback to embedded',err);
+  statusEl.textContent='Статус: файл не найден, встроенный скин ✓';
+  loader.load(fallbackUri, tex=>{ tex.magFilter=THREE.NearestFilter; tex.minFilter=THREE.NearestFilter; tex.colorSpace=THREE.SRGBColorSpace; build(tex); });
+});
+addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+</script>
+</body>
+</html>
