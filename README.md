@@ -12,8 +12,7 @@
 Открыть: `3d.html` (основной) или `3d-local.html` (зеркало). Для простого 2D — `index.html`.
 
 ## Фишки
-- **9 команд × 6-8 алиасов** с fuzzy-поиском (Levenshtein ≤2, `includes`, `ё→е`):  
-  `крутанись` → 360° Y, `сальто` → кувырок X+прыжок, `удар` → jab рукой, `невидимость` → fade 4с, `присесть` → crouch 0.7с, `прыжок` → squash/stretch, `крипер` → морфинг в крипера 6с с частицами 💚, `лечь` → toggle лечь/встать на землю, `упал` → падение вперёд + автоподъём.
+- **Скрытые команды × 48** с fuzzy-поиском (Levenshtein ≤2, `includes`, `ё→е`) — вводи и открывай ачивки, книга покажет прогресс.
 - **Книга** `📖 КНИГА` — показывает только открытые ачивки, прогресс `done/9`, зелёный градиент при 9/9.
 - **Графика 100%**: `NearestFilter`, `anisotropy 16`, `SRGBColorSpace`, `scene.fog=null`, ground `PlaneGeometry` + `GridHelper`.
 - **Mobile**: `viewport-fit=cover`, `touch-action:none`, `touches: ROTATE/DOLLY_PAN`, `mouseButtons` разделены, дабл-тап — сброс камеры, `visualViewport` resize, `maxlength=32`, `font-size:16px` против iOS zoom, увеличенные hit-areas 44px.
@@ -62,9 +61,6 @@ _archive_assets/          — временные cat/creeper png
 - `safeBool/safeInt` для `localStorage` (private mode, битый JSON).
 - `debouncedResize`, `isUserInteracting` 120мс задержка.
 - Версионирование `localStorage` готово к миграции.
-
-## Команды (примеры)
-`крутанись, крутись, вертанись` / `сальто, кувырок, флип` / `удар, бей, хит` / `инвиз, исчезни` / `присесть, крауч` / `прыжок, джамп` / `крипер, creeper` / `лечь, ляг` / `упал, грохнулся`
 
 ## Запуск
 Просто открой `3d.html` двойным кликом (скин встроен base64) или `python -m http.server 8000` → `http://localhost:8000/3d.html`.
