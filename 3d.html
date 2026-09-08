@@ -237,19 +237,13 @@
   .share-actions .book-close.primary:active{border-top-color:#2d5a00; border-left-color:#2d5a00; border-right-color:#FFF; border-bottom-color:#FFF;}
   .share-time{font-family:"Press Start 2P",monospace;font-size:9px;color:#5C2E0C; background:#FFF0C9; border:1px solid #8B7355; padding:4px 6px; display:inline-block; margin-bottom:6px;}
 
-  /* === поддержка всех устройств — УСИЛЕНА v2.2 === */
-  html{overscroll-behavior:none; -webkit-text-size-adjust:100%;}
-  body{overscroll-behavior:none; min-height:100dvh; min-height:100svh; -webkit-tap-highlight-color:transparent;}
-  canvas{touch-action:none; -webkit-user-select:none; user-select:none; display:block; width:100%; height:100dvh; height:100svh; outline:none;}
-  /* iPhone notch safe areas — все стороны */
+  /* === поддержка всех устройств === */
+  html{-webkit-text-size-adjust:100%;}
+  canvas{touch-action:none; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent;}
+  /* iPhone notch safe areas */
   @supports (padding: env(safe-area-inset-top)){
-    .mc-bar{padding-top:calc(6px + env(safe-area-inset-top)); padding-left:calc(8px + env(safe-area-inset-left)); padding-right:calc(8px + env(safe-area-inset-right));}
+    .mc-bar{padding-top:calc(6px + env(safe-area-inset-top));}
     #toast{top:calc(68px + env(safe-area-inset-top));}
-    .book-modal{padding-left:calc(14px + env(safe-area-inset-left)); padding-right:calc(14px + env(safe-area-inset-right));}
-  }
-  @supports (height: 100dvh){ canvas{height:100dvh;} }
-  @media (prefers-reduced-motion: reduce){
-    *, *::before, *::after{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
   }
   /* Small phones: iPhone SE 320, iPhone 12 mini 375 */
   @media (max-width: 374px){
@@ -331,19 +325,13 @@
     .settings-modal{max-height:90vh; overflow-y:auto;}
     #toast{top:48px; font-size:11px;}
   }
-  /* Touch devices - larger hit areas, prevent zoom + fix pan */
+  /* Touch devices - larger hit areas, prevent zoom */
   @media (hover: none) and (pointer: coarse){
-    html, body{overscroll-behavior-y:contain; touch-action:pan-x pan-y;}
-    canvas{touch-action:none !important;}
     .mc-btn, .book-btn, .book-close, .settings-btn, .book-nav-btn{min-height:44px; min-width:44px;}
-    .mc-input{font-size:16px !important; /* iOS anti-zoom */ }
+    .mc-input{font-size:16px}
     .mc-toggle{width:48px;height:28px;}
     .mc-toggle::after{width:18px;height:18px;}
     .mc-toggle.on::after{transform:translateX(22px);}
-  }
-  /* Foldables / notched + dynamic viewport */
-  @media (max-width: 500px) and (max-height: 900px) and (orientation: portrait){
-    .mc-bar{gap:4px;}
   }
   /* High DPI - crisper rendering */
   @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi){
@@ -444,12 +432,11 @@ const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,0.1,1000); ca
 const controls=new OrbitControls(camera,renderer.domElement);
   controls.target.set(0,10,0);
   controls.enableDamping=true; controls.dampingFactor=0.22;
-  controls.minDistance=8; controls.maxDistance=75;
-  controls.enablePan=false;
-  controls.enableZoom=true; controls.zoomSpeed=1.0; controls.rotateSpeed=0.9;
-  controls.minPolarAngle=0.05; controls.maxPolarAngle=Math.PI/2 - 0.05;
+  controls.minDistance=6; controls.maxDistance=80;
+  controls.enablePan=true; // FIX: на телефонах pinch не работал когда pan false
+  controls.enableZoom=true; controls.zoomSpeed=1.1; controls.rotateSpeed=0.9;
+  controls.minPolarAngle=0.05; controls.maxPolarAngle=Math.PI/2 - 0.02;
   controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
-  // FIX камера на телефонах: pinch-zoom теперь работает, pan отключен но dolly оставлен
   controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
   // страховка: domElement должен иметь touch-action:none для корректного pinch
   renderer.domElement.style.touchAction='none';
@@ -3203,8 +3190,7 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeBook(); });
       if(t.clientY>80){
         controls.target.set(0,10,0);
         camera.position.set(20,16,26);
-        // сбрасываем лимиты на случай зума в упор
-        controls.minDistance=8; controls.maxDistance=75;
+        controls.minDistance=6; controls.maxDistance=80;
         controls.update();
         showToast(_u("qsXJ7XqKwIrqiuaK74vaiup6i9uK64vaiuSL0orviueK6g=="));
       }
@@ -3224,25 +3210,16 @@ window.addEventListener("error", e=>{ console.error("JS error", e.message); if(w
 if(new URLSearchParams(location.search).get("reset")==="1"){ setTimeout(()=> doReset(), 400); }
 let resizeTimer=null;
 function onResize(){
-  const vv=window.visualViewport;
-  const w= vv ? Math.round(vv.width) : innerWidth;
-  const h= vv ? Math.round(vv.height) : innerHeight;
-  if(w<10 || h<10) return;
+  const w=innerWidth, h=innerHeight;
   camera.aspect=w/h; camera.updateProjectionMatrix();
-  renderer.setSize(w,h, false);
+  renderer.setSize(w,h);
   renderer.setPixelRatio(Math.min(devicePixelRatio, w<640 ? 1.5 : 2));
-  controls.update();
 }
 function debouncedResize(){ clearTimeout(resizeTimer); resizeTimer=setTimeout(onResize,80); }
 addEventListener("resize", debouncedResize);
-addEventListener("orientationchange", ()=> setTimeout(onResize, 250));
-if(window.visualViewport){
-  visualViewport.addEventListener("resize", debouncedResize);
-  visualViewport.addEventListener("scroll", debouncedResize);
-}
-window.addEventListener("pageshow", onResize);
+addEventListener("orientationchange", ()=> setTimeout(onResize, 200));
+if(window.visualViewport) visualViewport.addEventListener("resize", debouncedResize);
 onResize();
-setTimeout(onResize, 300);
 // fallback for file://
 if(location.protocol==="file:"){
   console.warn("file:// detected, use http://localhost:8000/3d.html for full 3D");
