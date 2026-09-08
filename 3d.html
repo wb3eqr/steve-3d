@@ -15,12 +15,17 @@
     display:flex;align-items:center;gap:6px;
     background:#C6C6C6;
     border:2px solid #000;
-    /* radius removed */
     box-shadow: inset -2px -2px 0 #555, inset 2px 2px 0 #FFF, 0 4px 12px rgba(0,0,0,0.5);
     padding:6px 8px;
     z-index:10;
+    max-width:calc(100vw - 12px);
+    box-sizing:border-box;
+    overflow:hidden;
   }
   .mc-bar:focus-within{ box-shadow: 0 10px 28px rgba(0,0,0,0.5), 0 0 0 2px rgba(85,255,85,0.35), inset 0 1px 0 rgba(255,255,255,0.9); transform:translateX(-50%) translateY(-1px); }
+  @media (max-width: 640px){
+    .mc-bar:focus-within{transform:none;}
+  }
   .mc-label{
     font-size:12px;color:#2b2b2b;letter-spacing:0.2px;
     text-shadow:none; font-weight:600;
@@ -247,12 +252,12 @@
   }
   /* Small phones: iPhone SE 320, iPhone 12 mini 375 */
   @media (max-width: 374px){
-    .mc-bar{top:6px; left:6px; right:6px; padding:5px 6px; gap:4px;}
+    .mc-bar{top:6px; left:6px; right:6px; transform:none; width:auto; max-width:none; padding:5px 6px; gap:4px; box-sizing:border-box;}
     .mc-label{display:none}
-    .mc-input{font-size:13px; padding:8px 10px; width:100%;}
-    .mc-input-wrap{flex:1; min-width:0;}
-    .mc-btn{padding:8px 10px; font-size:14px; min-width:32px;}
-    .book-btn{padding:8px 10px; font-size:10px;}
+    .mc-input{font-size:13px; padding:8px 10px; width:100%; min-width:0;}
+    .mc-input-wrap{flex:1 1 0; min-width:0;}
+    .mc-btn{padding:8px 10px; font-size:14px; min-width:32px; flex-shrink:0;}
+    .book-btn{padding:8px 10px; font-size:10px; flex-shrink:0;}
     .settings-btn{min-width:32px; min-height:32px; padding:5px 6px;}
     .book-modal{width:98vw; padding:8px; top:50%; max-height:85vh; overflow-y:auto;}
     .settings-modal{width:98vw; padding:10px;}
@@ -264,11 +269,12 @@
   }
   /* Large phones: iPhone 12/13/14 375-428, Pixel, Galaxy */
   @media (min-width: 375px) and (max-width: 428px){
-    .mc-bar{top:8px; left:8px; right:8px; transform:none; width:auto; padding:6px 8px; gap:6px;}
+    .mc-bar{top:8px; left:8px; right:8px; transform:none; width:auto; max-width:none; padding:6px 8px; gap:6px; box-sizing:border-box;}
     .mc-label{display:none}
-    .mc-input{font-size:14px; padding:10px 12px; width:100%;}
-    .mc-input-wrap{flex:1;}
-    .mc-btn{padding:10px 12px; font-size:15px;}
+    .mc-input{font-size:14px; padding:10px 12px; width:100%; min-width:0;}
+    .mc-input-wrap{flex:1 1 0; min-width:0;}
+    .mc-btn{padding:10px 12px; font-size:15px; flex-shrink:0;}
+    .book-btn{flex-shrink:0;}
     .book-modal{width:96vw; padding:10px; top:52%; max-height:82vh; overflow-y:auto;}
     .settings-modal{width:96vw; padding:12px;}
   }
@@ -3178,25 +3184,6 @@ if(_bookPagesEl){
 document.getElementById("bookClose").addEventListener("click", closeBook);
 document.getElementById("bookOverlay").addEventListener("click", closeBook);
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeBook(); });
-  // double-tap сброс камеры — не мешает pinch-zoom
-  let lastTap=0; let lastTapSingle=true;
-  canvas.addEventListener("touchstart", e=>{ lastTapSingle = e.touches.length===1; }, {passive:true});
-  canvas.addEventListener("touchend", e=>{
-    if(!lastTapSingle) return;
-    if(e.touches.length!==0) return; // pinch ещё активен
-    const now=Date.now();
-    if(now-lastTap<350 && e.changedTouches.length===1){
-      const t=e.changedTouches[0];
-      if(t.clientY>80){
-        controls.target.set(0,10,0);
-        camera.position.set(20,16,26);
-        controls.minDistance=6; controls.maxDistance=80;
-        controls.update();
-        showToast(_u("qsXJ7XqKwIrqiuaK74vaiup6i9uK64vaiuSL0orviueK6g=="));
-      }
-    }
-    lastTap=now;
-  }, {passive:true});
 btn.addEventListener("click", handleCmd);
 input.addEventListener("keydown", e=>{
   if(e.key==="Enter" || e.keyCode===13) handleCmd();
