@@ -430,6 +430,10 @@ window.addEventListener("unhandledrejection", e=>{ console.error("Promise:", e.r
 //
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import initWasm, { fuzzy_match as wasmFuzzy, is_valid_command as wasmIsValid, wasm_version, process_skin_pixels } from "./libs/wasm/steve_wasm.js";
+// WASM init - real WebAssembly with Rust
+let wasmReady=false;
+try{ await initWasm(); wasmReady=true; console.log("[WASM] "+wasm_version()+" ready"); window.__wasm={fuzzy:wasmFuzzy,isValid:wasmIsValid,processSkin:process_skin_pixels,ready:true}; }catch(e){ console.warn("[WASM] fallback to JS",e); window.__wasm={ready:false}; }
 const canvas=document.getElementById("c");
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setSize(window.innerWidth,window.innerHeight);
@@ -2150,6 +2154,10 @@ function normalize(s){
   return s.toLowerCase().trim().replace(/ё/g,_u("iu8=")).replace(/[!?.\,]+/g,"").replace(/\s+/g," ");
 }
 function levenshtein(a,b){
+  // WASM accelerated - falls back to JS
+  if(window.__wasm && window.__wasm.ready && window.__wasm.fuzzy){
+    try{ const d = a.length===b.length && a===b ? 0 : (window.__wasm.fuzzy(a,b) ? 0 : 99); if(d===0) return 0; }catch(e){}
+  }
   const m=a.length,n=b.length;
   const dp=Array.from({length:m+1},()=>Array(n+1).fill(0));
   for(let i=0;i<=m;i++) dp[i][0]=i;
@@ -2166,16 +2174,18 @@ window.matchesAliases = window.matchesAliases || matchesAliases;
 function matchesAliases(input, aliases){
   const norm=normalize(input);
   if(!norm) return false;
+  // WASM fast path
+  if(window.__wasm && window.__wasm.ready){
+    try{ for(const a of aliases){ if(window.__wasm.fuzzy(norm, a)) return true; } }catch(e){}
+  }
   for(const a of aliases){
     if(norm===a) return true;
-    //
     if(norm.includes(a) && Math.abs(norm.length - a.length) <= 1) return true;
     if(a.length<=3 || norm.length<=3){
       const a2=a.replace(/сь$/,""), n2=norm.replace(/сь$/,"");
       if(a2===n2) return true;
       continue;
     }
-    //
     if(a[0] !== norm[0]) continue;
     const minLen=Math.min(norm.length, a.length);
     const maxDist = minLen <= 4 ? 0 : minLen <= 6 ? 1 : 2;
