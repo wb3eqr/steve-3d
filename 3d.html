@@ -2100,7 +2100,8 @@ function doReset(){
   showToast(_u("qsXNy7Xi1XqK+4rri9qK5IvSiu+K54rkemp1bmI="));
   bookPage=0;
 }
-// [SECURE] Aliases in WASM - JS cleaned`nfunction normalize(s){
+// [SECURE] Aliases in WASM - JS cleaned
+function normalize(s){
   return s.toLowerCase().trim().replace(/ё/g,_u("iu8=")).replace(/[!?.\,]+/g,"").replace(/\s+/g," ");
 }
 function levenshtein(a,b){
@@ -3006,6 +3007,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
 </script>
 </body>
 </html>
+
 
 
 
