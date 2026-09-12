@@ -3,9 +3,12 @@
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#1a1a1e">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes"><link rel="icon" href="data:,"><title>Steve 3D — v2.1 clean</title><!-- v2.1-clean: полный аудит, исправлен fall, достижения, mobile, нейрослоп убран -->
+<meta name="mobile-web-app-capable" content="yes"><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@500;600&display=swap">
+<link rel="icon" href="data:,"><title>Steve 3D — v2.1 clean</title><!-- v2.1-clean: полный аудит, исправлен fall, достижения, mobile, нейрослоп убран -->
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@500;600&display=swap');
+  /* fonts moved to <link> for performance */
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:#1e1e1e;overflow:hidden;font-family:"Inter", system-ui, sans-serif}
   canvas{display:block}
@@ -142,8 +145,8 @@
     transform-origin: left center;
     backface-visibility:hidden;
   }
-  .book-page.flip-out{ transform: none; opacity:1; }
-  .book-page.flip-in{ animation: none; }
+  .book-page.flip-out{ transform: rotateY(-18deg) scale(0.98); opacity:0.7; }
+  .book-page.flip-in{ animation: pageIn 0.38s forwards; }
   @keyframes pageIn{0%{transform: none; opacity:1}100%{transform: none; opacity:1}}
   .book-entry{
     display:flex;align-items:center;gap:12px;
@@ -357,9 +360,9 @@
 
 </style>
 <script>
-window.normalize = window.normalize || function(s){ return s.toLowerCase().trim().replace(/ё/g,"е").replace(/[!?.\,]+/g,"").replace(/\s+/g," "); };
+// removed duplicate normalize - kept _u version at 2144
 window.levenshtein = window.levenshtein || function(a,b){ const m=a.length,n=b.length; const dp=Array.from({length:m+1},()=>Array(n+1).fill(0)); for(let i=0;i<=m;i++) dp[i][0]=i; for(let j=0;j<=n;j++) dp[0][j]=j; for(let i=1;i<=m;i++) for(let j=1;j<=n;j++){ const cost=a[i-1]===b[j-1]?0:1; dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+cost); } return dp[m][n]; };
-window.log = function(msg){ console.log("[log] "+msg); };
+window.log = function(msg){ if(localStorage.getItem("debug")==="1") console.log("[log] "+msg); };
 window.addEventListener("error", e=>{
   const msg=`JS error: ${e.message} at ${e.filename}:${e.lineno}:${e.colno}`;
   console.error(msg);
@@ -390,7 +393,7 @@ window.addEventListener("unhandledrejection", e=>{ console.error("Promise:", e.r
 </div>
 <div id="toast"></div>
 <div id="bookOverlay" class="book-overlay"></div>
-<div id="bookModal" class="book-modal">
+<div id="bookModal" class="book-modal" role="dialog" aria-modal="true" aria-label="Книга ачивок">
   <div class="book-title">📖 КНИГА АЧИВОК</div>
   <div class="book-pages" id="bookPages">
     <!-- entries via JS -->
@@ -407,7 +410,7 @@ window.addEventListener("unhandledrejection", e=>{ console.error("Promise:", e.r
   <button id="bookShare" class="book-close" style="background:#55FF55; border-color:#2d5a00; color:#0f3a00; text-shadow:1px 1px 0 #FFF; margin-top:8px;">⤴ ПОДЕЛИТЬСЯ РЕЗУЛЬТАТОМ</button>
 </div>
 <div id="shareOverlay" class="book-overlay"></div>
-<div id="shareModal" class="book-modal share-modal">
+<div id="shareModal" class="book-modal share-modal" role="dialog" aria-modal="true" aria-label="Поделиться">
   <div class="book-title">⤴ ПОДЕЛИТЬСЯ</div>
   <div class="share-stats" id="shareStats"></div>
   <div class="book-pages" id="sharePages"></div>
@@ -429,12 +432,12 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 const canvas=document.getElementById("c");
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-renderer.setSize(innerWidth,innerHeight);
+renderer.setSize(window.innerWidth,window.innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, window.innerWidth<640 ? 1.5 : 2));
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const scene=new THREE.Scene(); scene.background=new THREE.Color(0x1a1a1e);
-const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,0.1,1000); camera.position.set(20,16,26);
+const camera=new THREE.PerspectiveCamera(48,window.innerWidth/window.innerHeight,0.1,1000); camera.position.set(20,16,26);
 const controls=new OrbitControls(camera,renderer.domElement);
   controls.target.set(0,10,0);
   controls.enableDamping=true; controls.dampingFactor=0.22;
@@ -556,6 +559,8 @@ function buildSteve(tex){
     renderer.render(scene,camera);
   });
 }
+
+function encodeHTML(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function showToast(msg, isErr=false){
   const t=document.getElementById("toast");
   t.textContent=msg;
@@ -820,7 +825,7 @@ function doCreeper(){
       if(p>0.3 && p<0.6 && Math.random()>0.7){
         const particle=document.createElement("div");
         particle.textContent="💚";
-        particle.style.cssText="position:fixed;left:"+(innerWidth/2 + (Math.random()-0.5)*120)+"px;top:"+(innerHeight/2 + (Math.random()-0.5)*120)+"px;font-size:14px;pointer-events:none;z-index:20;transition: transform 600ms, opacity 600ms";
+        particle.style.cssText="position:fixed;left:"+(window.innerWidth/2 + (Math.random()-0.5)*120)+"px;top:"+(window.innerHeight/2 + (Math.random()-0.5)*120)+"px;font-size:14px;pointer-events:none;z-index:20;transition: transform 600ms, opacity 600ms";
         document.body.appendChild(particle);
         setTimeout(()=>{ particle.style.transform="translateY(-40px) scale(1.4)"; particle.style.opacity="0"; }, 20);
         setTimeout(()=> particle.remove(), 650);
@@ -1435,7 +1440,7 @@ function doStorm(){
   const dur=4000;
   //
   const particles=[];
-  for(let i=0;i<8;i++){ const d=document.createElement("div"); d.textContent=["🍃","💨","✨"][i%3]; d.style.cssText=`position:fixed;left:${innerWidth/2 + (Math.random()-0.5)*200}px;top:${innerHeight/2 + (Math.random()-0.5)*200}px;font-size:22px;pointer-events:none;z-index:20`; document.body.appendChild(d); particles.push(d); }
+  for(let i=0;i<8;i++){ const d=document.createElement("div"); d.textContent=["🍃","💨","✨"][i%3]; d.style.cssText=`position:fixed;left:${window.innerWidth/2 + (Math.random()-0.5)*200}px;top:${window.innerHeight/2 + (Math.random()-0.5)*200}px;font-size:22px;pointer-events:none;z-index:20`; document.body.appendChild(d); particles.push(d); }
   function frame(now){
     const tt=Math.min((now-start)/dur,1);
     steveGroup.rotation.y += 0.18;
@@ -1463,7 +1468,7 @@ function spawnPixel(colors, spread, yOff, dx, up, ms, size){
   if(__pxCount>14) return; __pxCount++;
   const c=colors[(Math.random()*colors.length)|0];
   const d=document.createElement("div");
-  d.style.cssText="position:fixed;left:"+(innerWidth/2+(Math.random()-0.5)*spread*2)+"px;top:"+(innerHeight/2+yOff+(Math.random()-0.5)*spread*0.6)+"px;width:"+size+"px;height:"+size+"px;background:"+c+";pointer-events:none;z-index:20;image-rendering:pixelated;transition:transform "+ms+"ms linear,opacity "+ms+"ms";
+  d.style.cssText="position:fixed;left:"+(window.innerWidth/2+(Math.random()-0.5)*spread*2)+"px;top:"+(window.innerHeight/2+yOff+(Math.random()-0.5)*spread*0.6)+"px;width:"+size+"px;height:"+size+"px;background:"+c+";pointer-events:none;z-index:20;image-rendering:pixelated;transition:transform "+ms+"ms linear,opacity "+ms+"ms";
   document.body.appendChild(d);
   requestAnimationFrame(()=>{ d.style.transform="translate("+dx+"px,"+up+"px)"; d.style.opacity="0"; });
   setTimeout(()=>{ try{d.remove();}catch(e){} __pxCount--; }, ms+60);
@@ -1820,7 +1825,7 @@ function doMagnet(){
     steveGroup.position.y=Math.sin((now-t0)*0.004)*0.25;
     bits.forEach((b,i)=>{
       b.a+=0.06; b.r=Math.max(46, 170-animEase(Math.min(t*1.4,1))*124);
-      const x=innerWidth/2+Math.cos(b.a+i)*b.r, y=innerHeight/2+Math.sin(b.a+i)*b.r*0.7;
+      const x=window.innerWidth/2+Math.cos(b.a+i)*b.r, y=window.innerHeight/2+Math.sin(b.a+i)*b.r*0.7;
       b.el.style.transform="translate("+x+"px,"+y+"px) translate(-50%,-50%)";
       b.el.style.opacity=String(t>0.85 ? (1-t)/0.15 : 1);
     });
@@ -2064,10 +2069,10 @@ function doSnow(){
   ensureStanding(); spinning=true; showToast(_u("ivuKx4rPisl6bovb"));
   const L=animLimbs(); const t0=performance.now(); const dur=4000;
   const flakes=[];
-  for(let i=0;i<12;i++){ const d=document.createElement("div"); const sz=3+Math.floor(Math.random()*4); d.style.cssText="position:fixed;left:"+Math.floor(Math.random()*innerWidth)+"px;top:-14px;width:"+sz+"px;height:"+sz+"px;background:#eaf4ff;pointer-events:none;z-index:20"; document.body.appendChild(d); flakes.push({el:d, x:Math.random()*innerWidth, y:-14, s:1+Math.random()*1.6, ph:Math.random()*6.28}); }
+  for(let i=0;i<12;i++){ const d=document.createElement("div"); const sz=3+Math.floor(Math.random()*4); d.style.cssText="position:fixed;left:"+Math.floor(Math.random()*window.innerWidth)+"px;top:-14px;width:"+sz+"px;height:"+sz+"px;background:#eaf4ff;pointer-events:none;z-index:20"; document.body.appendChild(d); flakes.push({el:d, x:Math.random()*window.innerWidth, y:-14, s:1+Math.random()*1.6, ph:Math.random()*6.28}); }
   function frame(now){
     const t=Math.min((now-t0)/dur,1); const e=(now-t0)*0.001;
-    flakes.forEach(f=>{ f.y+=f.s*2.4; f.x+=Math.sin(e*2+f.ph)*0.9; if(f.y>innerHeight+14){ f.y=-14; f.x=Math.random()*innerWidth; } f.el.style.left=Math.floor(f.x)+"px"; f.el.style.top=Math.floor(f.y)+"px"; });
+    flakes.forEach(f=>{ f.y+=f.s*2.4; f.x+=Math.sin(e*2+f.ph)*0.9; if(f.y>window.innerHeight+14){ f.y=-14; f.x=Math.random()*window.innerWidth; } f.el.style.left=Math.floor(f.x)+"px"; f.el.style.top=Math.floor(f.y)+"px"; });
     steveGroup.rotation.y=Math.sin(e*1.2)*0.22;
     steveGroup.position.y=Math.sin(e*7)*0.06;
     if(L.rArm) L.rArm.rotation.x=Math.sin(e*7)*0.12-0.15;
@@ -2085,7 +2090,7 @@ function doReset(){
   try{
     Object.keys(localStorage).filter(k=>k.startsWith("ach_")).forEach(k=>localStorage.removeItem(k));
   }catch(e){ console.warn(e); }
-  achievements={spin:false,salto:false,hit:false,invis:false,crouch:false,jump:false,creeper:false,fall:false,block:false,dance:false,crash:false,run:false,fly:false,shake:false,zombie:false,giant:false,tiny:false,rainbow:false,ghost:false,wave:false,storm:false,teleport:false,clone:false,fire:false,water:false,ice:false,lightning:false,explosion:false,void:false,parkour:false,disco:false,robot:false,ninja:false,space:false,gravity:false,magnet:false,summon:false,time:false,shield:false,bow:false,elytra:false,totem:false,dragon:false,portal:false,chameleon:false,wind:false,lava:false,snow:false,spinCount:0,saltoCount:0,hitCount:0,invisCount:0,crouchCount:0,jumpCount:0,creeperCount:0,fallCount:0,blockCount:0,danceCount:0,crashCount:0,runCount:0,flyCount:0,shakeCount:0,zombieCount:0,giantCount:0,tinyCount:0,rainbowCount:0,ghostCount:0,waveCount:0,stormCount:0,teleportCount:0,cloneCount:0,fireCount:0,waterCount:0,iceCount:0,lightningCount:0,explosionCount:0,voidCount:0,parkourCount:0,discoCount:0,robotCount:0,ninjaCount:0,spaceCount:0,gravityCount:0,magnetCount:0,summonCount:0,timeCount:0,shieldCount:0,bowCount:0,elytraCount:0,totemCount:0,dragonCount:0,portalCount:0,chameleonCount:0,windCount:0,lavaCount:0,snowCount:0,};
+  const ACH_VERSION="2.1"; try{if(localStorage.getItem("ach_version")!==ACH_VERSION) localStorage.setItem("ach_version",ACH_VERSION);}catch(e){} achievements={spin:false,salto:false,hit:false,invis:false,crouch:false,jump:false,creeper:false,fall:false,block:false,dance:false,crash:false,run:false,fly:false,shake:false,zombie:false,giant:false,tiny:false,rainbow:false,ghost:false,wave:false,storm:false,teleport:false,clone:false,fire:false,water:false,ice:false,lightning:false,explosion:false,void:false,parkour:false,disco:false,robot:false,ninja:false,space:false,gravity:false,magnet:false,summon:false,time:false,shield:false,bow:false,elytra:false,totem:false,dragon:false,portal:false,chameleon:false,wind:false,lava:false,snow:false,spinCount:0,saltoCount:0,hitCount:0,invisCount:0,crouchCount:0,jumpCount:0,creeperCount:0,fallCount:0,blockCount:0,danceCount:0,crashCount:0,runCount:0,flyCount:0,shakeCount:0,zombieCount:0,giantCount:0,tinyCount:0,rainbowCount:0,ghostCount:0,waveCount:0,stormCount:0,teleportCount:0,cloneCount:0,fireCount:0,waterCount:0,iceCount:0,lightningCount:0,explosionCount:0,voidCount:0,parkourCount:0,discoCount:0,robotCount:0,ninjaCount:0,spaceCount:0,gravityCount:0,magnetCount:0,summonCount:0,timeCount:0,shieldCount:0,bowCount:0,elytraCount:0,totemCount:0,dragonCount:0,portalCount:0,chameleonCount:0,windCount:0,lavaCount:0,snowCount:0,};
   try{ saveAch(); }catch(e){}
   renderBook();
   showToast(_u("qsXNy7Xi1XqK+4rri9qK5IvSiu+K54rkemp1bmI="));
@@ -2630,7 +2635,7 @@ function renderBook(){
   slice.forEach(a=>{
     const state="done";
     const isDataIcon = a.icon && a.icon.startsWith("data:");
-    const iconHtml = `<span class="icon mc-icon" style="background-image:url('${a.icon}')"></span>`;
+    const iconHtml = `<span class="icon mc-icon" style="background-image:url('${encodeHTML(a.icon)}')"></span>`;
     html+=`<div class="book-entry ${state}">${iconHtml}<span>${a.title}<br><small style="font-size:10px;color:#6B6B6B">${a.desc}</small><br><small style="font-size:11px;color:#2d5a00">выполнено: ${a.cnt} раз</small></span></div>`;
   });
   html+=`</div>`;
@@ -2731,19 +2736,19 @@ function getShareText(){
 function getShareUrl(){
   try{
     const payload=getSharePayload();
-    const data=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    const data=btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(payload))));
     const base=location.origin+location.pathname;
     return base+"?share="+encodeURIComponent(data);
   }catch(e){ return location.href; }
 }
 function decodeSharePayload(s){
   try{
-    const j=JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(s)))));
+    const j=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(decodeURIComponent(s)), c=>c.charCodeAt(0))));
     if(j && typeof j==="object" && Array.isArray(j.keys)) return j;
     if(Array.isArray(j)) return {v:1, keys:j, done:j.length, total:48, time:Date.now(), timeStr:new Date().toLocaleString("ru-RU")};
   }catch(e){}
   try{
-    const j2=JSON.parse(decodeURIComponent(escape(atob(s))));
+    const j2=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(s), c=>c.charCodeAt(0))));
     if(Array.isArray(j2)) return {v:1, keys:j2, done:j2.length, total:48, time:Date.now(), timeStr:new Date().toLocaleString("ru-RU")};
   }catch(e){}
   return null;
@@ -2770,7 +2775,7 @@ function renderShare(){
     html+=`<div class="book-entry locked"><span class="icon mc-icon">?</span><span>Пока пусто<br><small style="font-size:11px;color:#5C2E0C">выполни команду — и ачивка появится здесь</small></span></div>`;
   } else {
     slice.forEach(a=>{
-      const iconHtml=`<span class="icon mc-icon" style="background-image:url('${a.icon}')"></span>`;
+      const iconHtml=`<span class="icon mc-icon" style="background-image:url('${encodeHTML(a.icon)}')"></span>`;
       html+=`<div class="book-entry done">${iconHtml}<span>${a.title}<br><small style="font-size:10px;color:#6B6B6B">${a.desc}</small><br><small style="font-size:11px;color:#2d5a00">выполнено: ${a.cnt} раз</small></span></div>`;
     });
   }
@@ -2826,12 +2831,12 @@ document.getElementById("sharePrev")?.addEventListener("click", ()=>{ if(sharePa
 document.getElementById("shareNext")?.addEventListener("click", ()=>{ const totalPages=Math.max(1,Math.ceil(getAchList().filter(a=>a.done).length/sharePerPage)); if(sharePage<totalPages-1){ sharePage++; renderShare(); handlePageFlip("next"); }});
 document.getElementById("shareCopyText")?.addEventListener("click", async ()=>{
   const t=getShareText();
-  try{ await navigator.clipboard.writeText(t); showToast("📋 Текст скопирован"); }catch(e){ const ta=document.createElement("textarea"); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); showToast("📋 Текст скопирован"); }
+  try{ if(navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(t); else throw new Error("noSecure"); showToast("📋 Текст скопирован"); }catch(e){ const ta=document.createElement("textarea"); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); showToast("📋 Текст скопирован"); }
 });
 document.getElementById("shareCopyLink")?.addEventListener("click", async ()=>{
   const u=getShareUrl();
-  try{ await navigator.clipboard.writeText(u); showToast("🔗 Ссылка скопирована"); }catch(e){ const ta=document.createElement("textarea"); ta.value=u; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); showToast("🔗 Ссылка скопирована"); }
-  if(navigator.share){
+  try{ if(navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(u); else throw new Error("noSecure"); showToast("🔗 Ссылка скопирована"); }catch(e){ const ta=document.createElement("textarea"); ta.value=u; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); showToast("🔗 Ссылка скопирована"); }
+  if(navigator.share && (!navigator.canShare || navigator.canShare({url:u}))){
     try{ await navigator.share({title:"Steve 3D — Мой результат", text:getShareText(), url:u}); }catch(e){}
   }
 });
@@ -2870,7 +2875,7 @@ try{
             html+=`<div class="book-entry locked"><span class="icon mc-icon">?</span><span>В ссылке пока пусто<br><small style="font-size:11px;color:#5C2E0C">0/48 — никто ещё не выполнил команд</small></span></div>`;
           } else {
             slice.forEach(a=>{
-              const iconHtml=`<span class="icon mc-icon" style="background-image:url('${a.icon}')"></span>`;
+              const iconHtml=`<span class="icon mc-icon" style="background-image:url('${encodeHTML(a.icon)}')"></span>`;
               html+=`<div class="book-entry done">${iconHtml}<span>${a.title}<br><small style="font-size:10px;color:#6B6B6B">${a.desc}</small><br><small style="font-size:11px;color:#2d5a00">выполнено: ${a.cnt} раз</small></span></div>`;
             });
           }
@@ -3197,7 +3202,7 @@ window.addEventListener("error", e=>{ console.error("JS error", e.message); if(w
 if(new URLSearchParams(location.search).get("reset")==="1"){ setTimeout(()=> doReset(), 400); }
 let resizeTimer=null;
 function onResize(){
-  const w=innerWidth, h=innerHeight;
+  const w=window.innerWidth, h=window.innerHeight;
   camera.aspect=w/h; camera.updateProjectionMatrix();
   renderer.setSize(w,h);
   renderer.setPixelRatio(Math.min(devicePixelRatio, w<640 ? 1.5 : 2));

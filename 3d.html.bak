@@ -2090,7 +2090,7 @@ function doReset(){
   try{
     Object.keys(localStorage).filter(k=>k.startsWith("ach_")).forEach(k=>localStorage.removeItem(k));
   }catch(e){ console.warn(e); }
-  const ACH_VERSION="2.1"; try{if(localStorage.getItem("ach_version")!==ACH_VERSION) localStorage.setItem("ach_version",ACH_VERSION);}catch(e){} achievements={spin:false,salto:false,hit:false,invis:false,crouch:false,jump:false,creeper:false,fall:false,block:false,dance:false,crash:false,run:false,fly:false,shake:false,zombie:false,giant:false,tiny:false,rainbow:false,ghost:false,wave:false,storm:false,teleport:false,clone:false,fire:false,water:false,ice:false,lightning:false,explosion:false,void:false,parkour:false,disco:false,robot:false,ninja:false,space:false,gravity:false,magnet:false,summon:false,time:false,shield:false,bow:false,elytra:false,totem:false,dragon:false,portal:false,chameleon:false,wind:false,lava:false,snow:false,spinCount:0,saltoCount:0,hitCount:0,invisCount:0,crouchCount:0,jumpCount:0,creeperCount:0,fallCount:0,blockCount:0,danceCount:0,crashCount:0,runCount:0,flyCount:0,shakeCount:0,zombieCount:0,giantCount:0,tinyCount:0,rainbowCount:0,ghostCount:0,waveCount:0,stormCount:0,teleportCount:0,cloneCount:0,fireCount:0,waterCount:0,iceCount:0,lightningCount:0,explosionCount:0,voidCount:0,parkourCount:0,discoCount:0,robotCount:0,ninjaCount:0,spaceCount:0,gravityCount:0,magnetCount:0,summonCount:0,timeCount:0,shieldCount:0,bowCount:0,elytraCount:0,totemCount:0,dragonCount:0,portalCount:0,chameleonCount:0,windCount:0,lavaCount:0,snowCount:0,};
+  achievements={spin:false,salto:false,hit:false,invis:false,crouch:false,jump:false,creeper:false,fall:false,block:false,dance:false,crash:false,run:false,fly:false,shake:false,zombie:false,giant:false,tiny:false,rainbow:false,ghost:false,wave:false,storm:false,teleport:false,clone:false,fire:false,water:false,ice:false,lightning:false,explosion:false,void:false,parkour:false,disco:false,robot:false,ninja:false,space:false,gravity:false,magnet:false,summon:false,time:false,shield:false,bow:false,elytra:false,totem:false,dragon:false,portal:false,chameleon:false,wind:false,lava:false,snow:false,spinCount:0,saltoCount:0,hitCount:0,invisCount:0,crouchCount:0,jumpCount:0,creeperCount:0,fallCount:0,blockCount:0,danceCount:0,crashCount:0,runCount:0,flyCount:0,shakeCount:0,zombieCount:0,giantCount:0,tinyCount:0,rainbowCount:0,ghostCount:0,waveCount:0,stormCount:0,teleportCount:0,cloneCount:0,fireCount:0,waterCount:0,iceCount:0,lightningCount:0,explosionCount:0,voidCount:0,parkourCount:0,discoCount:0,robotCount:0,ninjaCount:0,spaceCount:0,gravityCount:0,magnetCount:0,summonCount:0,timeCount:0,shieldCount:0,bowCount:0,elytraCount:0,totemCount:0,dragonCount:0,portalCount:0,chameleonCount:0,windCount:0,lavaCount:0,snowCount:0,};
   try{ saveAch(); }catch(e){}
   renderBook();
   showToast(_u("qsXNy7Xi1XqK+4rri9qK5IvSiu+K54rkemp1bmI="));
@@ -2748,7 +2748,7 @@ function decodeSharePayload(s){
     if(Array.isArray(j)) return {v:1, keys:j, done:j.length, total:48, time:Date.now(), timeStr:new Date().toLocaleString("ru-RU")};
   }catch(e){}
   try{
-    const j2=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(s), c=>c.charCodeAt(0))));
+    const j2=JSON.parse(decodeURIComponent(escape(atob(s))));
     if(Array.isArray(j2)) return {v:1, keys:j2, done:j2.length, total:48, time:Date.now(), timeStr:new Date().toLocaleString("ru-RU")};
   }catch(e){}
   return null;

@@ -21,8 +21,9 @@ if ($busy) {
 }
 
 Write-Host "[3/3] Открываю браузер..."
+# polling instead of sleep 2
+for($i=0;$i -lt 15;$i++){ try{ Invoke-WebRequest -Uri "http://localhost:$port/3d.html" -UseBasicParsing -TimeoutSec 1 | Out-Null; break } catch { Start-Sleep -Milliseconds 300 } }
 Start-Process "http://localhost:$port/3d.html"
-Start-Process "http://localhost:$port/index.html"
 
 Write-Host "ГОТОВО! http://localhost:$port/3d.html" -ForegroundColor Green
 Write-Host "Для остановки закрой окно сервера"

@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 title Steve Minecraft PNG - Local Server
 echo.
 echo  ===============================================
@@ -26,8 +27,12 @@ if %errorlevel% equ 0 (
 )
 echo [1/3] Starting server at http://localhost:8000 ...
 start "Steve Server 8000" %PY% -m http.server 8000
-echo [2/3] Waiting 2 sec...
-timeout /t 2 /nobreak >nul
+echo [2/3] Waiting for server...
+for /L %%i in (1,1,10) do (
+  powershell -Command "try{Invoke-WebRequest -Uri http://localhost:8000/3d.html -UseBasicParsing -TimeoutSec 1 | Out-Null; exit 0}catch{exit 1}"
+  if !errorlevel! equ 0 goto OPEN
+  timeout /t 1 /nobreak >nul
+)
 :OPEN
 echo [3/3] Opening site in browser...
 start http://localhost:8000/3d.html
