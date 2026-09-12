@@ -13,6 +13,25 @@ export function achievements_progress(counts) {
 
 /**
  * @param {string} input
+ * @returns {string}
+ */
+export function check_command(input) {
+    let deferred2_0;
+    let deferred2_1;
+    try {
+        const ptr0 = passStringToWasm0(input, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.check_command(ptr0, len0);
+        deferred2_0 = ret[0];
+        deferred2_1 = ret[1];
+        return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+        wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+    }
+}
+
+/**
+ * @param {string} input
  * @param {string} target
  * @returns {boolean}
  */
@@ -23,6 +42,26 @@ export function fuzzy_match(input, target) {
     const len1 = WASM_VECTOR_LEN;
     const ret = wasm.fuzzy_match(ptr0, len0, ptr1, len1);
     return ret !== 0;
+}
+
+/**
+ * @param {string} command
+ * @param {number} ts
+ * @returns {string}
+ */
+export function generate_proof(command, ts) {
+    let deferred2_0;
+    let deferred2_1;
+    try {
+        const ptr0 = passStringToWasm0(command, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.generate_proof(ptr0, len0, ts);
+        deferred2_0 = ret[0];
+        deferred2_1 = ret[1];
+        return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+        wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+    }
 }
 
 /**
@@ -47,6 +86,21 @@ export function process_skin_pixels(data) {
     var v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
     wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
     return v2;
+}
+
+/**
+ * @param {string} command
+ * @param {string} token
+ * @param {number} now_ms
+ * @returns {boolean}
+ */
+export function verify_proof(command, token, now_ms) {
+    const ptr0 = passStringToWasm0(command, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(token, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.verify_proof(ptr0, len0, ptr1, len1, now_ms);
+    return ret !== 0;
 }
 
 /**
