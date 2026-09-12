@@ -433,7 +433,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import initWasm, { fuzzy_match as wasmFuzzy, is_valid_command as wasmIsValid, wasm_version, process_skin_pixels, check_command, generate_proof, verify_proof } from "./libs/wasm/steve_wasm.js";
 // WASM init - real WebAssembly with Rust
 let wasmReady=false;
-try{ await initWasm(); wasmReady=true; console.log("[WASM] "+wasm_version()+" ready"); window.__wasm={fuzzy:wasmFuzzy,isValid:wasmIsValid,processSkin:process_skin_pixels,check:check_command,proof:generate_proof,verify:verify_proof,ready:true}; }catch(e){ console.warn("[WASM] fallback",e); window.__wasm={ready:false}; }
+let wasmApi=null; let pendingProof=null; try{ await initWasm(); wasmReady=true; console.log("[WASM] "+wasm_version()+" ready"); wasmApi={fuzzy:wasmFuzzy,isValid:wasmIsValid,processSkin:process_skin_pixels,check:check_command,proof:generate_proof,verify:verify_proof,ready:true}; }catch(e){ console.warn("[WASM] fallback",e); wasmApi={ready:false}; }
 const canvas=document.getElementById("c");
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setSize(window.innerWidth,window.innerHeight);
@@ -2105,8 +2105,8 @@ function doReset(){
 }
 function levenshtein(a,b){
   // WASM accelerated - falls back to JS
-  if(window.__wasm && window.__wasm.ready && window.__wasm.fuzzy){
-    try{ const d = a.length===b.length && a===b ? 0 : (window.__wasm.fuzzy(a,b) ? 0 : 99); if(d===0) return 0; }catch(e){}
+  if(wasmApi && wasmApi.ready && wasmApi.fuzzy){
+    try{ const d = a.length===b.length && a===b ? 0 : (wasmApi.fuzzy(a,b) ? 0 : 99); if(d===0) return 0; }catch(e){}
   }
   const m=a.length,n=b.length;
   const dp=Array.from({length:m+1},()=>Array(n+1).fill(0));
@@ -2125,8 +2125,8 @@ function matchesAliases(input, aliases){
   const norm=normalize(input);
   if(!norm) return false;
   // WASM fast path
-  if(window.__wasm && window.__wasm.ready){
-    try{ for(const a of aliases){ if(window.__wasm.fuzzy(norm, a)) return true; } }catch(e){}
+  if(wasmApi && wasmApi.ready){
+    try{ for(const a of aliases){ if(wasmApi.fuzzy(norm, a)) return true; } }catch(e){}
   }
   for(const a of aliases){
     if(norm===a) return true;
@@ -2470,18 +2470,18 @@ function unlockAch(type){
  // [SECURE] Wrapper - requires WASM proof
 const _origUnlockAch = unlockAch;
 function secureUnlock(cmd){
-  const pending = window.__pendingProof;
+  const pending = pendingProof;
   if(!pending || pending.cmd !== cmd){ return false; }
   let ok=false;
   try{
-    if(window.__wasm && window.__wasm.verify){
-      ok = window.__wasm.verify(cmd, pending.proof, Date.now());
+    if(wasmApi && wasmApi.verify){
+      ok = wasmApi.verify(cmd, pending.proof, Date.now());
     }
   }catch(e){ ok=false; }
   if(!ok){ showToast("Cheat blocked", true); return false; }
   if(spinning){ return false; }
   _origUnlockAch(cmd);
-  window.__pendingProof=null;
+  pendingProof=null;
   return true;
 }
 try{
@@ -2489,9 +2489,7 @@ try{
   localStorage.setItem = function(k,v){
     if(k.startsWith("ach_") && !k.endsWith("Count")){
       const stack = (new Error()).stack || "";
-      if(!stack.includes("secureUnlock") && !stack.includes("_origUnlockAch")){
-        console.warn("Blocked direct",k);
-      }
+      if(!stack.includes("secureUnlock") && !stack.includes("_origUnlockAch")){ console.warn("Blocked direct",k); return; }
     }
     return _origSetItem(k,v);
   };
@@ -2901,8 +2899,8 @@ function handleCmd(){
   }
   let cmd="";
   try{
-    if(window.__wasm && window.__wasm.ready && window.__wasm.check){
-      cmd = window.__wasm.check(norm);
+    if(wasmApi && wasmApi.ready && wasmApi.check){
+      cmd = wasmApi.check(norm);
     }
   }catch(e){}
   if(!cmd){
@@ -2914,7 +2912,7 @@ function handleCmd(){
     return;
   }
   const now=Date.now();
-  if(cmd===lastCmdNorm && (now-lastCmdTime)<COOLDOWN_MS){
+  if((now-lastCmdTime)<COOLDOWN_MS){
     bar.classList.remove("shake"); void bar.offsetWidth; bar.classList.add("shake");
     showToast("Wait...", true);
     return;
@@ -2924,8 +2922,8 @@ function handleCmd(){
     return;
   }
   let proof="";
-  try{ proof = window.__wasm.proof ? window.__wasm.proof(cmd, now) : ""; }catch(e){}
-  window.__pendingProof = {cmd, proof, ts: now};
+  try{ proof = wasmApi.proof ? wasmApi.proof(cmd, now) : ""; }catch(e){}
+  pendingProof = {cmd, proof, ts: now};
   lastCmdNorm=cmd; lastCmdTime=now;
   const map={spin:doSpin360, salto:doSomersault, hit:doHit, invis:doInvisibility, crouch:doCrouch, jump:doJump, creeper:doCreeper, fall:doFall, block:doBlock, dance:doDance, crash:doCrash, run:doRun, fly:doFly, shake:doShake, zombie:doZombie, giant:doGiant, tiny:doTiny, rainbow:doRainbow, ghost:doGhost, wave:doWave, storm:doStorm, teleport:doTeleport, clone:doClone, fire:doFire, water:doWater, ice:doIce, lightning:doLightning, explosion:doExplosion, void:doVoid, parkour:doParkour, disco:doDisco, robot:doRobot, ninja:doNinja, space:doSpace, gravity:doGravity, magnet:doMagnet, summon:doSummon, time:doTime, shield:doShield, bow:doBow, elytra:doElytra, totem:doTotem, dragon:doDragon, portal:doPortal, chameleon:doChameleon, wind:doWind, lava:doLava, snow:doSnow, reset:doReset};
   const fn = map[cmd];
@@ -3008,6 +3006,8 @@ document.addEventListener("DOMContentLoaded", ()=>{
 </script>
 </body>
 </html>
+
+
 
 
 
