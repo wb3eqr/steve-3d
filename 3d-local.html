@@ -430,7 +430,7 @@ window.addEventListener("unhandledrejection", e=>{ console.error("Promise:", e.r
 //
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import initWasm, { fuzzy_match as wasmFuzzy, is_valid_command as wasmIsValid, wasm_version, process_skin_pixels, check_command, generate_proof, verify_proof } from "./libs/wasm/steve_wasm.js";
+import initWasm, { fuzzy_match as wasmFuzzy, is_valid_command as wasmIsValid, wasm_version, process_skin_pixels, check_command, generate_proof, verify_proof } from "./libs/wasm/steve_wasm.js?v=4";
 // WASM init - real WebAssembly with Rust
 let wasmReady=false;
 let wasmApi=null; let pendingProof=null; try{ await initWasm(); wasmReady=true; console.log("[WASM] "+wasm_version()+" ready"); wasmApi={fuzzy:wasmFuzzy,isValid:wasmIsValid,processSkin:process_skin_pixels,check:check_command,proof:generate_proof,verify:verify_proof,ready:true}; }catch(e){ console.warn("[WASM] fallback",e); wasmApi={ready:false}; }
@@ -3008,6 +3008,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
 </script>
 </body>
 </html>
+
 
 
 
