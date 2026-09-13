@@ -430,6 +430,10 @@ window.addEventListener("unhandledrejection", e=>{ console.error("Promise:", e.r
 //
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import initWasm, { fuzzy_match as wasmFuzzy, is_valid_command as wasmIsValid, wasm_version, process_skin_pixels, check_command, generate_proof, verify_proof } from "./libs/wasm/steve_wasm.js";
+// WASM init - real WebAssembly with Rust
+let wasmReady=false;
+let wasmApi=null; let pendingProof=null; try{ await initWasm(); wasmReady=true; console.log("[WASM] "+wasm_version()+" ready"); wasmApi={fuzzy:wasmFuzzy,isValid:wasmIsValid,processSkin:process_skin_pixels,check:check_command,proof:generate_proof,verify:verify_proof,ready:true}; }catch(e){ console.warn("[WASM] fallback",e); wasmApi={ready:false}; }
 const canvas=document.getElementById("c");
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setSize(window.innerWidth,window.innerHeight);
@@ -610,7 +614,7 @@ function doSpin360(){
     const ease=1 - Math.pow(1-t,3);
     steveGroup.rotation.y = startY + (target-startY)*ease;
     if(t<1) requestAnimationFrame(frame);
-    else { steveGroup.rotation.y = ((target % (Math.PI*2))+Math.PI*2)%(Math.PI*2); spinning=false; showToast(_u("isCK+or5iviKyorHivmKwYr7ivV7")); }
+    else { steveGroup.rotation.y = ((target % (Math.PI*2))+Math.PI*2)%(Math.PI*2); spinning=false; try{ secureUnlock("spin"); }catch(e){} ;  showToast(_u("isCK+or5iviKyorHivmKwYr7ivV7")); }
   }
   requestAnimationFrame(frame);
 }
@@ -629,7 +633,7 @@ function doSomersault(){
     steveGroup.rotation.x = startX + (targetX-startX)*ease;
     steveGroup.position.y = startY + Math.sin(t*Math.PI)*5;
     if(t<1) requestAnimationFrame(frame);
-    else { steveGroup.rotation.x = ((targetX % (Math.PI*2))+Math.PI*2)%(Math.PI*2); steveGroup.position.y=startY; spinning=false; showToast(_u("ivuKyorBivaK+IrEew==")); }
+    else { steveGroup.rotation.x = ((targetX % (Math.PI*2))+Math.PI*2)%(Math.PI*2); steveGroup.position.y=startY; spinning=false; try{ secureUnlock("salto"); }catch(e){} ;  showToast(_u("ivuKyorBivaK+IrEew==")); }
   }
   requestAnimationFrame(frame);
 }
@@ -658,7 +662,7 @@ function doHit(){
       steveGroup.position.z = punch*0.7;
     }
     if(t<1) requestAnimationFrame(frame);
-    else { if(rArm){ rArm.position.z=0; rArm.rotation.x=startRotX; } else steveGroup.position.z=0; spinning=false; showToast(_u("ivmKzorKivp7eqrFyP8=")); }
+    else { if(rArm){ rArm.position.z=0; rArm.rotation.x=startRotX; } else steveGroup.position.z=0; spinning=false; try{ secureUnlock("hit"); }catch(e){} ;  showToast(_u("ivmKzorKivp7eqrFyP8=")); }
   }
   requestAnimationFrame(frame);
 }
@@ -721,7 +725,7 @@ function doInvisibility(){
       steveGroup.scale.copy(startScale);
       steveGroup._yOff=0;
       resetToDefault();
-      spinning=false;
+      spinning=false; try{ secureUnlock("invis"); }catch(e){} ; 
       showToast(_u("qsXL4XqKxYrEivWKyIrCisGK+4r1ew=="));
     }
   }
@@ -763,7 +767,7 @@ function doCrouch(){
       steveGroup.scale.y=1;
       if(rLeg) rLeg.rotation.x=0;
       if(lLeg) lLeg.rotation.x=0;
-      spinning=false; showToast(_u("isWK+orCivuKz4rBeqrF/dQ="));
+      spinning=false; try{ secureUnlock("crouch"); }catch(e){} ;  showToast(_u("isWK+orCivuKz4rBeqrF/dQ="));
     }
   }
   requestAnimationFrame(frame);
@@ -785,7 +789,7 @@ function doJump(){
     steveGroup.scale.x = 2 - squash;
     steveGroup.scale.z = 2 - squash;
     if(t<1) requestAnimationFrame(frame);
-    else { steveGroup.position.y=startY; steveGroup.scale.set(1,1,1); spinning=false; showToast(_u("isWK+orxisyKxIrAe3q49ty14tU=")); }
+    else { steveGroup.position.y=startY; steveGroup.scale.set(1,1,1); spinning=false; try{ secureUnlock("jump"); }catch(e){} ;  showToast(_u("isWK+orxisyKxIrAe3q49ty14tU=")); }
   }
   requestAnimationFrame(frame);
 }
@@ -798,7 +802,7 @@ function doCreeper(){
   steveGroup.traverse(o=>{ if(o.isMesh) originalMats.push({mesh:o, mat:o.material}); });
   //
   const creeperImg = new Image();
-  creeperImg.onerror = ()=>{ spinning=false; showToast(_u("isSL0oriiuuK4IrqeovbiuCK4orniup6iuCL2oriiuWK74vaiuo="), true); renderer.domElement.style.filter=""; };
+  creeperImg.onerror = ()=>{ spinning=false; try{ secureUnlock("creeper"); }catch(e){} ;  showToast(_u("isSL0oriiuuK4IrqeovbiuCK4orniup6iuCL2oriiuWK74vaiuo="), true); renderer.domElement.style.filter=""; };
   creeperImg.src = "data:image/png;base64," + creeperB64;
   creeperImg.onload = ()=>{
     const tex = new THREE.Texture(creeperImg);
@@ -984,7 +988,7 @@ function doFall(){
           steveGroup.position.y = (startY-4.0) + 4.0*e2;
           steveGroup.position.z = 1.1*(1-e2);
           if(tt2<1) requestAnimationFrame(up);
-          else { resetToDefault(); spinning=false; showToast(_u("qsX913qKyIr7iviKyorBew==")); }
+          else { resetToDefault(); spinning=false; try{ secureUnlock("fall"); }catch(e){} ;  showToast(_u("qsX913qKyIr7iviKyorBew==")); }
         }
         requestAnimationFrame(up);
       }, 700);
@@ -1069,7 +1073,7 @@ function doBlock(){
         if(gg<1) requestAnimationFrame(grow);
       }
       requestAnimationFrame(grow);
-      spinning=false;
+      spinning=false; try{ secureUnlock("block"); }catch(e){} ; 
       showToast(_u("qsX963qKy4rBisSKwHqKxYrEivuK+IrKisiKwYrPisd6cmtqi9tz"));
       //
       setTimeout(()=>{
@@ -1118,7 +1122,7 @@ function doDance(){
     const t=elapsed/dur;
     if(t>=1){
       resetToDefault();
-      spinning=false;
+      spinning=false; try{ secureUnlock("dance"); }catch(e){} ; 
       showToast(_u("qsXP4HqK+IrKiseKz4r8eorEisCKxIrHiv2Kz4rHew=="));
       return;
     }
@@ -1171,7 +1175,7 @@ function doCrash(){
     else {
       parts.forEach(p=>{ p.mesh.position.copy(p.pos); p.mesh.rotation.copy(p.rot); });
       resetToDefault();
-      spinning=false;
+      spinning=false; try{ secureUnlock("crash"); }catch(e){} ; 
       showToast(_u("qsXO/XqKxYrEiv2KworHis+Kx3s="));
     }
   }
@@ -1203,7 +1207,7 @@ function doRun(){
     if(rArm) rArm.rotation.x = Math.sin(phase*2.2 + Math.PI)*0.95;
     if(lArm) lArm.rotation.x = Math.sin(phase*2.2)*0.95;
     if(tt<1) requestAnimationFrame(frame);
-    else { resetToDefault(); spinning=false; showToast(_u("qsXV23qK+4r4isSKxXs=")); }
+    else { resetToDefault(); spinning=false; try{ secureUnlock("run"); }catch(e){} ;  showToast(_u("qsXV23qK+4r4isSKxXs=")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1224,7 +1228,7 @@ function doFly(){
     steveGroup.rotation.y += 0.06;
     steveGroup.scale.set(1+Math.sin(tt*Math.PI)*0.08,1,1);
     if(tt<1) requestAnimationFrame(frame);
-    else { resetToDefault(); spinning=false; showToast(_u("qsXB9nqKxYr6isKKzYrPisaKwYrCisGK+4r1ew==")); }
+    else { resetToDefault(); spinning=false; try{ secureUnlock("fly"); }catch(e){} ;  showToast(_u("qsXB9nqKxYr6isKKzYrPisaKwYrCisGK+4r1ew==")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1238,7 +1242,7 @@ function doShake(){
   const basePos=steveGroup.position.clone();
   function frame(now){
     const tt=Math.min((now-start)/dur,1);
-    if(tt>=1){ resetToDefault(); spinning=false; showToast(_u("uMbfeor5ivuKxYrEisCKxIrCisGK+4r1")); return; }
+    if(tt>=1){ resetToDefault(); spinning=false; try{ secureUnlock("shake"); }catch(e){} ;  showToast(_u("uMbfeor5ivuKxYrEisCKxIrCisGK+4r1")); return; }
     steveGroup.position.x = basePos.x + Math.sin(now*0.08)*0.7*(1-tt*0.5) + (Math.random()-0.5)*0.35;
     steveGroup.position.z = basePos.z + Math.cos(now*0.09)*0.45*(1-tt*0.5);
     steveGroup.rotation.z = Math.sin(now*0.07)*0.18*(1-tt*0.3);
@@ -1270,7 +1274,7 @@ function doZombie(){
     if(tt<1) requestAnimationFrame(frame);
     else {
       steveGroup.traverse(o=>{ if(o.isMesh){ const arr=Array.isArray(o.material)?o.material:[o.material]; arr.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); }); }});
-      resetToDefault(); spinning=false; showToast(_u("qsX913qK+4rHisSKyIrKeor7iviKworIew=="));
+      resetToDefault(); spinning=false; try{ secureUnlock("zombie"); }catch(e){} ;  showToast(_u("qsX913qK+4rHisSKyIrKeor7iviKworIew=="));
     }
   }
   requestAnimationFrame(frame);
@@ -1291,7 +1295,7 @@ function doGiant(){
     steveGroup.scale.set(s,s,s);
     steveGroup.position.y = (s-1)*3;
     if(tt<1) requestAnimationFrame(frame);
-    else { resetToDefault(); spinning=false; showToast(_u("qsXKxnqKx4rEivqKxorKew==")); }
+    else { resetToDefault(); spinning=false; try{ secureUnlock("giant"); }catch(e){} ;  showToast(_u("qsXKxnqKx4rEivqKxorKew==")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1310,7 +1314,7 @@ function doTiny(){
     else s=0.45 + ((tt-0.75)/0.25)*0.55;
     steveGroup.scale.set(s,s,s);
     if(tt<1) requestAnimationFrame(frame);
-    else { resetToDefault(); spinning=false; showToast(_u("qsX913qKx4rEivqKxorKew==")); }
+    else { resetToDefault(); spinning=false; try{ secureUnlock("tiny"); }catch(e){} ;  showToast(_u("qsX913qKx4rEivqKxorKew==")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1330,7 +1334,7 @@ function doRainbow(){
     const tt=Math.min((now-start)/dur,1);
     if(tt>=1){
       mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); });
-      resetToDefault(); spinning=false; showToast(_u("uMbyeorJisSK+IrEisiKxA==")); return;
+      resetToDefault(); spinning=false; try{ secureUnlock("rainbow"); }catch(e){} ;  showToast(_u("uMbyeorJisSK+IrEisiKxA==")); return;
     }
     const hue=(now*0.12)%360;
     const h=hue/360;
@@ -1368,7 +1372,7 @@ function doGhost(){
     if(rArm) rArm.rotation.x=Math.sin((now-start)*0.008)*0.45 + 0.3;
     if(lArm) lArm.rotation.x=Math.sin((now-start)*0.008+1)*0.45 + 0.3;
     if(tt<1) requestAnimationFrame(frame);
-    else { mats.forEach(m=>{ m.opacity=1; m.transparent=false; m.needsUpdate=true; }); resetToDefault(); spinning=false; showToast(_u("qsXL4XqKwor7iv2Kz4rNew==")); }
+    else { mats.forEach(m=>{ m.opacity=1; m.transparent=false; m.needsUpdate=true; }); resetToDefault(); spinning=false; try{ secureUnlock("ghost"); }catch(e){} ;  showToast(_u("qsXL4XqKwor7iv2Kz4rNew==")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1390,7 +1394,7 @@ function doWave(){
     }
     steveGroup.rotation.y = Math.sin(phase*0.6)*0.12;
     if(tt<1) requestAnimationFrame(frame);
-    else { if(rArm){ rArm.rotation.z=0; rArm.rotation.x=0; } resetToDefault(); spinning=false; showToast(_u("qsXL0XqKxYr6isKKyIrPivh7")); }
+    else { if(rArm){ rArm.rotation.z=0; rArm.rotation.x=0; } resetToDefault(); spinning=false; try{ secureUnlock("wave"); }catch(e){} ;  showToast(_u("qsXL0XqKxYr6isKKyIrPivh7")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1426,7 +1430,7 @@ function doTeleport(){
       steveGroup.scale.set(0.7+e*0.3,0.7+e*0.3,0.7+e*0.3);
       renderer.domElement.style.filter=`blur(${(1-e)*4}px) hue-rotate(${(1-e)*180}deg)`;
       if(tt<1) requestAnimationFrame(frame);
-      else { mats.forEach(m=>{ m.opacity=1; m.transparent=false; }); renderer.domElement.style.filter=""; resetToDefault(); spinning=false; showToast(_u("qsXJ13qK+IrPisGKz4rFisSK+or4isKK+orEisiKyorHew==")); }
+      else { mats.forEach(m=>{ m.opacity=1; m.transparent=false; }); renderer.domElement.style.filter=""; resetToDefault(); spinning=false; try{ secureUnlock("teleport"); }catch(e){} ;  showToast(_u("qsXJ13qK+IrPisGKz4rFisSK+or4isKK+orEisiKyorHew==")); }
     }
   }
   requestAnimationFrame(frame);
@@ -1453,7 +1457,7 @@ function doStorm(){
       particles.forEach(p=> p.remove());
       renderer.domElement.style.filter="";
       resetToDefault();
-      spinning=false;
+      spinning=false; try{ secureUnlock("storm"); }catch(e){} ; 
       showToast(_u("uMLateLVeoryiviKworBivZ7"));
     }
   }
@@ -1533,7 +1537,7 @@ function doClone(){
     else {
       scene.remove(clone);
       clone.traverse(o=>{ if(o.isMesh){ if(o.geometry) o.geometry.dispose(); const arr=Array.isArray(o.material)?o.material:[o.material]; arr.forEach(m=>{ try{m.dispose();}catch(e){} }); }});
-      resetToDefault(); spinning=false; showToast(_u("isCKwYrEisd6isKK+4r9is+KzQ=="));
+      resetToDefault(); spinning=false; try{ secureUnlock("clone"); }catch(e){} ;  showToast(_u("isCKwYrEisd6isKK+4r9is+KzQ=="));
     }
   }
   requestAnimationFrame(frame);
@@ -1557,7 +1561,7 @@ function doFire(){
     if(Math.random()>0.4) spawnPixel(PX.fire, 80, 70, 0, -95, 600, 8);
     if(Math.random()>0.8) spawnPixel(PX.spark, 110, 0, 0, -50, 500, 5);
     if(t<1) requestAnimationFrame(frame);
-    else { mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); }); resetToDefault(); spinning=false; showToast(_u("isWKxIr4ivmK/w==")); }
+    else { mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); }); resetToDefault(); spinning=false; try{ secureUnlock("fire"); }catch(e){} ;  showToast(_u("isWKxIr4ivmK/w==")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1578,7 +1582,7 @@ function doWater(){
     if(L.lLeg) L.lLeg.rotation.x=0.5-sw*0.5;
     if(Math.random()>0.6) spawnPixel(PX.water, 100, -40, 0, 60, 700, 6);
     if(t<1) requestAnimationFrame(frame);
-    else { mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); }); resetToDefault(); spinning=false; showToast(_u("isiK8Yr7isSK/w==")); }
+    else { mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); }); resetToDefault(); spinning=false; try{ secureUnlock("water"); }catch(e){} ;  showToast(_u("isiK8Yr7isSK/w==")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1606,7 +1610,7 @@ function doIce(){
       frost.style.opacity="0";
       setTimeout(()=>{ try{frost.remove();}catch(e){} }, 450);
       mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); });
-      resetToDefault(); spinning=false; showToast(_u("ivqKyor7iviKyor1isE="));
+      resetToDefault(); spinning=false; try{ secureUnlock("ice"); }catch(e){} ;  showToast(_u("ivqKyor7iviKyor1isE="));
     }
   }
   requestAnimationFrame(frame);
@@ -1628,7 +1632,7 @@ function doLightning(){
   setTimeout(()=>{
     try{bolt.remove();}catch(e){}
     steveGroup.position.y=Math.max(0, steveGroup.position.y-0.6);
-    resetToDefault(); spinning=false; showToast(_u("ismK+orEisY="));
+    resetToDefault(); spinning=false; try{ secureUnlock("lightning"); }catch(e){} ;  showToast(_u("ismK+orEisY="));
   }, 950);
 }
 function doExplosion(){
@@ -1647,7 +1651,7 @@ function doExplosion(){
     steveGroup.position.z=base.z+(Math.random()-0.5)*1.4*shake;
     if(t>0.5 && Math.random()>0.7) spawnPixel(PX.smoke, 130, -20, 0, -55, 700, 8);
     if(t<1) requestAnimationFrame(frame);
-    else { resetToDefault(); spinning=false; showToast(_u("is6K8YrG")); }
+    else { resetToDefault(); spinning=false; try{ secureUnlock("explosion"); }catch(e){} ;  showToast(_u("is6K8YrG")); }
   }
   frame.boomed=false;
   requestAnimationFrame(frame);
@@ -1668,7 +1672,7 @@ function doVoid(){
     const s=1-down*0.3; steveGroup.scale.set(s,s,s);
     if(Math.random()>0.72) spawnPixel(PX.magic, 140, 20, 0, 30, 600, 6);
     if(t<1) requestAnimationFrame(frame);
-    else { shroud.style.opacity="0"; setTimeout(()=>{ try{shroud.remove();}catch(e){} }, 650); resetToDefault(); spinning=false; showToast(_u("isiK8YrLivqKyorBivuK9Q==")); }
+    else { shroud.style.opacity="0"; setTimeout(()=>{ try{shroud.remove();}catch(e){} }, 650); resetToDefault(); spinning=false; try{ secureUnlock("void"); }catch(e){} ;  showToast(_u("isiK8YrLivqKyorBivuK9Q==")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1692,7 +1696,7 @@ function doParkour(){
     steveGroup.scale.set(1+(1-sq), sq, 1);
     if(hop>0.92 && !frame.dust){ frame.dust=true; spawnPixel(PX.smoke, 70, 60, 0, -14, 400, 6); setTimeout(()=>frame.dust=false, 350); }
     if(t<1) requestAnimationFrame(frame);
-    else { resetToDefault(); spinning=false; showToast(_u("iv6KworHisKK8g==")); }
+    else { resetToDefault(); spinning=false; try{ secureUnlock("parkour"); }catch(e){} ;  showToast(_u("iv6KworHisKK8g==")); }
   }
   frame.dust=false;
   requestAnimationFrame(frame);
@@ -1718,7 +1722,7 @@ function doDisco(){
     mats.forEach(m=>{ if(m.color) m.color.setRGB(0.75+0.25*c[0], 0.75+0.25*c[1], 0.75+0.25*c[2]); });
     if(Math.random()>0.82) spawnPixel(PX.party, 150, -20, 0, -20, 550, 6);
     if(t<1) requestAnimationFrame(frame);
-    else { mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); }); resetToDefault(); spinning=false; showToast(_u("isiKz4r9is+K+orCiseKwIrKeorEisA=")); }
+    else { mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); }); resetToDefault(); spinning=false; try{ secureUnlock("disco"); }catch(e){} ;  showToast(_u("isiKz4r9is+K+orCiseKwIrKeorEisA=")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1741,7 +1745,7 @@ function doRobot(){
     if(L.lLeg) L.lLeg.rotation.x=0;
     steveGroup.rotation.z+=(0-steveGroup.rotation.z)*0.2;
     if(t<1) requestAnimationFrame(frame);
-    else { mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); }); resetToDefault(); spinning=false; showToast(_u("ivqKxIrLisSK+HqK+4r4isSKxQ==")); }
+    else { mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); }); resetToDefault(); spinning=false; try{ secureUnlock("robot"); }catch(e){} ;  showToast(_u("ivqKxIrLisSK+HqK+4r4isSKxQ==")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1765,7 +1769,7 @@ function doNinja(){
       const t=Math.min((now-t1)/500,1);
       steveGroup.rotation.x=0.22*(1-animEase(t));
       if(t<1) requestAnimationFrame(back);
-      else { resetToDefault(); spinning=false; showToast(_u("ivuK+IrPisGK+w==")); }
+      else { resetToDefault(); spinning=false; try{ secureUnlock("ninja"); }catch(e){} ;  showToast(_u("ivuK+IrPisGK+w==")); }
     })(performance.now());
   }, 1600);
 }
@@ -1787,7 +1791,7 @@ function doSpace(){
     if(L.lLeg) L.lLeg.rotation.x=0.35-Math.sin(e*2)*0.15;
     stars.forEach((s,i)=>{ s.style.transform="translateY("+Math.floor(Math.sin(e*1.5+i)*8)+"px)"; s.style.opacity=String(0.45+0.35*Math.abs(Math.sin(e*2+i))); });
     if(t<1) requestAnimationFrame(frame);
-    else { stars.forEach(s=>{ try{s.remove();}catch(e){} }); resetToDefault(); spinning=false; showToast(_u("isWKxIr7isqKzorAiso=")); }
+    else { stars.forEach(s=>{ try{s.remove();}catch(e){} }); resetToDefault(); spinning=false; try{ secureUnlock("space"); }catch(e){} ;  showToast(_u("isWKxIr7isqKzorAiso=")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1805,7 +1809,7 @@ function doGravity(){
     if(L.head) L.head.rotation.x=-up*0.4;
     if(Math.random()>0.8) spawnPixel(PX.spark, 90, 20, 0, 25, 550, 5);
     if(t<1) requestAnimationFrame(frame);
-    else { resetToDefault(); spinning=false; showToast(_u("iseKxIr6isaKyg==")); }
+    else { resetToDefault(); spinning=false; try{ secureUnlock("gravity"); }catch(e){} ;  showToast(_u("iseKxIr6isaKyg==")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1830,7 +1834,7 @@ function doMagnet(){
       b.el.style.opacity=String(t>0.85 ? (1-t)/0.15 : 1);
     });
     if(t<1) requestAnimationFrame(frame);
-    else { bits.forEach(b=>{ try{b.el.remove();}catch(e){} }); resetToDefault(); spinning=false; showToast(_u("isWK+orCiviK9YrHivmK+IrE")); }
+    else { bits.forEach(b=>{ try{b.el.remove();}catch(e){} }); resetToDefault(); spinning=false; try{ secureUnlock("magnet"); }catch(e){} ;  showToast(_u("isWK+orCiviK9YrHivmK+IrE")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1845,7 +1849,7 @@ function doSummon(){
   requestAnimationFrame(()=>{ wolf.style.left="38%"; wolf.style.top="60%"; });
   setTimeout(()=>{ if(L.rArm) L.rArm.rotation.x=-0.25; spawnPixel(PX.spark, 60, 30, 0, -40, 700, 6); }, 1100);
   setTimeout(()=>{ wolf.style.left="104%"; }, 3000);
-  setTimeout(()=>{ try{wolf.remove();}catch(e){} resetToDefault(); spinning=false; showToast(_u("ivmKy4rPisyKyorB")); }, 4000);
+  setTimeout(()=>{ try{wolf.remove();}catch(e){} resetToDefault(); spinning=false; try{ secureUnlock("summon"); }catch(e){} ;  showToast(_u("ivmKy4rPisyKyorB")); }, 4000);
 }
 function doTime(){
   if(!steveGroup||spinning) return;
@@ -1871,7 +1875,7 @@ function doTime(){
     orb.style.boxShadow=moon?"0 0 24px #dfe8ff":"0 0 24px #ffd83d";
     steveGroup.rotation.y=Math.sin(t*Math.PI)*0.3;
     if(t<1) requestAnimationFrame(frame);
-    else { try{orb.remove();}catch(e){} scene.background.setHex(cfgBgHex()); dir.position.set(18,28,18); dir.intensity=0.9; resetToDefault(); spinning=false; showToast(_u("is6Kz4rHivY=")); }
+    else { try{orb.remove();}catch(e){} scene.background.setHex(cfgBgHex()); dir.position.set(18,28,18); dir.intensity=0.9; resetToDefault(); spinning=false; try{ secureUnlock("time"); }catch(e){} ;  showToast(_u("is6Kz4rHivY=")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1891,7 +1895,7 @@ function doShield(){
     bar.style.opacity="0"; bar.style.transform="scale(1.5)";
     setTimeout(()=>{ try{bar.remove();}catch(e){} }, 380);
     mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); });
-    resetToDefault(); spinning=false; showToast(_u("ivOKwor4eor5isuK+orKisc="));
+    resetToDefault(); spinning=false; try{ secureUnlock("shield"); }catch(e){} ;  showToast(_u("ivOKwor4eor5isuK+orKisc="));
   }, 2600);
 }
 function doBow(){
@@ -1914,7 +1918,7 @@ function doBow(){
       setTimeout(()=>{ try{ar.remove();}catch(e){} spawnPixel(PX.spark, 90, -40, 0, -20, 450, 6); }, 400);
     }
     if(t<1) requestAnimationFrame(frame);
-    else { resetToDefault(); spinning=false; showToast(_u("isiK8Yr7iviK+orPisF7")); }
+    else { resetToDefault(); spinning=false; try{ secureUnlock("bow"); }catch(e){} ;  showToast(_u("isiK8Yr7iviK+orPisF7")); }
   }
   frame.shot=false;
   requestAnimationFrame(frame);
@@ -1935,7 +1939,7 @@ function doElytra(){
     if(L.lArm) L.lArm.rotation.z=1.35-Math.sin((now-t0)*0.008)*0.12;
     if(Math.random()>0.72) spawnPixel(PX.smoke, 120, 10, 0, 10, 550, 6);
     if(t<1) requestAnimationFrame(frame);
-    else { resetToDefault(); spinning=false; showToast(_u("isWK+orCis2Kz4rGisGKworBivuK9Q==")); }
+    else { resetToDefault(); spinning=false; try{ secureUnlock("elytra"); }catch(e){} ;  showToast(_u("isWK+orCis2Kz4rGisGKworBivuK9Q==")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1959,7 +1963,7 @@ function doTotem(){
     mats.forEach(m=>{ if(m.color) m.color.setRGB(1, 0.85+0.1*Math.sin(e*6), 0.45); });
     if(Math.random()>0.66) spawnPixel(PX.gold, 100, -30, 0, -55, 650, 6);
     if(t<1) requestAnimationFrame(frame);
-    else { try{ring.remove();}catch(e){} mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); }); resetToDefault(); spinning=false; showToast(_u("iviKxIr4is+KxnqK+4rCivWKz4r4")); }
+    else { try{ring.remove();}catch(e){} mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); }); resetToDefault(); spinning=false; try{ secureUnlock("totem"); }catch(e){} ;  showToast(_u("iviKxIr4is+KxnqK+4rCivWKz4r4")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1979,7 +1983,7 @@ function doDragon(){
     steveGroup.rotation.y=Math.sin(e*1.6)*0.2;
     if(L.head && Math.sin(e*2.2)>0.86 && Math.random()>0.5) spawnPixel(PX.fire, 60, -70, 0, -34, 450, 7);
     if(t<1) requestAnimationFrame(frame);
-    else { resetToDefault(); spinning=false; showToast(_u("is6K+orKisCKxIrHeor5isGKz4r4is+KwQ==")); }
+    else { resetToDefault(); spinning=false; try{ secureUnlock("dragon"); }catch(e){} ;  showToast(_u("is6K+orKisCKxIrHeor5isGKz4r4is+KwQ==")); }
   }
   requestAnimationFrame(frame);
 }
@@ -1995,7 +1999,7 @@ function doPortal(){
     steveGroup.position.y=swirl*1.2;
     if(Math.random()>0.5) spawnPixel(PX.magic, 130, 0, 0, -10, 600, 7);
     if(t<1) requestAnimationFrame(frame);
-    else { resetToDefault(); spinning=false; showToast(_u("isWKxIr6iviKyorBeorNisqKwIr6ivGKwYr7ivU=")); }
+    else { resetToDefault(); spinning=false; try{ secureUnlock("portal"); }catch(e){} ;  showToast(_u("isWKxIr6iviKyorBeorNisqKwIr6ivGKwYr7ivU=")); }
   }
   requestAnimationFrame(frame);
 }
@@ -2016,7 +2020,7 @@ function doChameleon(){
     steveGroup.rotation.y=Math.sin(e*0.9)*0.3;
     if(L.head) L.head.rotation.y=Math.sin(e*2.4)*0.55;
     if(t<1) requestAnimationFrame(frame);
-    else { mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); }); resetToDefault(); spinning=false; showToast(_u("isaKyor7isCKwor6isSKyIrAisp6ivuKx4r1iviKyg==")); }
+    else { mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); }); resetToDefault(); spinning=false; try{ secureUnlock("chameleon"); }catch(e){} ;  showToast(_u("isaKyor7isCKwor6isSKyIrAisp6ivuKx4r1iviKyg==")); }
   }
   requestAnimationFrame(frame);
 }
@@ -2035,7 +2039,7 @@ function doWind(){
     if(L.head) L.head.rotation.z=0.12*gust;
     if(Math.random()>0.45) spawnPixel(Math.random()>0.5?PX.leaf:PX.smoke, 220, 0, -140, 6, 500, 7);
     if(t<1) requestAnimationFrame(frame);
-    else { resetToDefault(); spinning=false; showToast(_u("ivKK+IrCisGK9g==")); }
+    else { resetToDefault(); spinning=false; try{ secureUnlock("wind"); }catch(e){} ;  showToast(_u("ivKK+IrCisGK9g==")); }
   }
   requestAnimationFrame(frame);
 }
@@ -2060,7 +2064,7 @@ function doLava(){
     if(L.lLeg) L.lLeg.rotation.x=Math.max(0,-step)*0.9;
     if(Math.random()>0.62) spawnPixel(PX.fire, 100, 60, 0, -50, 550, 7);
     if(t<1) requestAnimationFrame(frame);
-    else { glow.style.opacity="0"; setTimeout(()=>{ try{glow.remove();}catch(e){} }, 550); mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); }); resetToDefault(); spinning=false; showToast(_u("isSK+4r4ivGKwYrE")); }
+    else { glow.style.opacity="0"; setTimeout(()=>{ try{glow.remove();}catch(e){} }, 550); mats.forEach(m=>{ if(m.color) m.color.setHex(0xffffff); }); resetToDefault(); spinning=false; try{ secureUnlock("lava"); }catch(e){} ;  showToast(_u("isSK+4r4ivGKwYrE")); }
   }
   requestAnimationFrame(frame);
 }
@@ -2080,7 +2084,7 @@ function doSnow(){
     if(L.head) L.head.rotation.y=Math.sin(e*1.8)*0.35;
     if(t>0.75 && !frame.brush){ frame.brush=true; if(L.rArm) L.rArm.rotation.z=-0.8; setTimeout(()=>{ if(L.rArm) L.rArm.rotation.z=0; }, 500); }
     if(t<1) requestAnimationFrame(frame);
-    else { flakes.forEach(f=>{ try{f.el.remove();}catch(e){} }); resetToDefault(); spinning=false; showToast(_u("isiK9or0ismKynqKwIrEiseK/YrCisGKyor7ivY=")); }
+    else { flakes.forEach(f=>{ try{f.el.remove();}catch(e){} }); resetToDefault(); spinning=false; try{ secureUnlock("snow"); }catch(e){} ;  showToast(_u("isiK9or0ismKynqKwIrEiseK/YrCisGKyor7ivY=")); }
   }
   frame.brush=false;
   requestAnimationFrame(frame);
@@ -2096,10 +2100,16 @@ function doReset(){
   showToast(_u("qsXNy7Xi1XqK+4rri9qK5IvSiu+K54rkemp1bmI="));
   bookPage=0;
 }
-// [SECURE] Aliases in WASM - JS cleaned`nfunction normalize(s){
+function _u(s){const b=atob(s);const a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i)^90;return new TextDecoder().decode(a);}
+// [SECURE] Aliases in WASM - JS cleaned
+function normalize(s){
   return s.toLowerCase().trim().replace(/ё/g,_u("iu8=")).replace(/[!?.\,]+/g,"").replace(/\s+/g," ");
 }
 function levenshtein(a,b){
+  // WASM accelerated - falls back to JS
+  if(wasmApi && wasmApi.ready && wasmApi.fuzzy){
+    try{ const d = a.length===b.length && a===b ? 0 : (wasmApi.fuzzy(a,b) ? 0 : 99); if(d===0) return 0; }catch(e){}
+  }
   const m=a.length,n=b.length;
   const dp=Array.from({length:m+1},()=>Array(n+1).fill(0));
   for(let i=0;i<=m;i++) dp[i][0]=i;
@@ -2116,16 +2126,18 @@ window.matchesAliases = window.matchesAliases || matchesAliases;
 function matchesAliases(input, aliases){
   const norm=normalize(input);
   if(!norm) return false;
+  // WASM fast path
+  if(wasmApi && wasmApi.ready){
+    try{ for(const a of aliases){ if(wasmApi.fuzzy(norm, a)) return true; } }catch(e){}
+  }
   for(const a of aliases){
     if(norm===a) return true;
-    //
     if(norm.includes(a) && Math.abs(norm.length - a.length) <= 1) return true;
     if(a.length<=3 || norm.length<=3){
       const a2=a.replace(/сь$/,""), n2=norm.replace(/сь$/,"");
       if(a2===n2) return true;
       continue;
     }
-    //
     if(a[0] !== norm[0]) continue;
     const minLen=Math.min(norm.length, a.length);
     const maxDist = minLen <= 4 ? 0 : minLen <= 6 ? 1 : 2;
@@ -2457,6 +2469,33 @@ function unlockAch(type){
     },300);
   }
 }
+ // [SECURE] Wrapper - requires WASM proof
+const _origUnlockAch = unlockAch;
+function secureUnlock(cmd){
+  const pending = pendingProof;
+  if(!pending || pending.cmd !== cmd){ return false; }
+  let ok=false;
+  try{
+    if(wasmApi && wasmApi.verify){
+      ok = wasmApi.verify(cmd, pending.proof, Date.now());
+    }
+  }catch(e){ ok=false; }
+  if(!ok){ showToast("Cheat blocked", true); return false; }
+  if(spinning){ return false; }
+  _origUnlockAch(cmd);
+  pendingProof=null;
+  return true;
+}
+try{
+  const _origSetItem = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function(k,v){
+    if(k.startsWith("ach_") && !k.endsWith("Count")){
+      const stack = (new Error()).stack || "";
+      if(!stack.includes("secureUnlock") && !stack.includes("_origUnlockAch")){ console.warn("Blocked direct",k); return; }
+    }
+    return _origSetItem(k,v);
+  };
+}catch(e){}
 let bookPage=0;
 const bookPerPage=4;
 const mcIcons={
@@ -2860,267 +2899,38 @@ function handleCmd(){
     bar.classList.remove("shake"); void bar.offsetWidth; bar.classList.add("shake");
     return;
   }
-  const now=Date.now();
-  if(norm===lastCmdNorm && (now-lastCmdTime)<COOLDOWN_MS){
+  let cmd="";
+  try{
+    if(wasmApi && wasmApi.ready && wasmApi.check){
+      cmd = wasmApi.check(norm);
+    }
+  }catch(e){}
+  if(!cmd){
+    try{ if(typeof check_command === 'function'){ cmd = check_command(norm); } }catch(e){}
+  }
+  if(!cmd){
     bar.classList.remove("shake"); void bar.offsetWidth; bar.classList.add("shake");
-    showToast(_u("uNXpeorNiuqL04rii9iK6nqK5IvYeovbiuWK6ormiup7eorFiuSK7orkiuyK7ori"), true);
+    showToast("Unknown command", true);
+    return;
+  }
+  const now=Date.now();
+  if((now-lastCmdTime)<COOLDOWN_MS){
+    bar.classList.remove("shake"); void bar.offsetWidth; bar.classList.add("shake");
+    showToast("Wait...", true);
     return;
   }
   if(spinning){
-    showToast(_u("uNXpeorKiueK4ormiuqL3Irii9V6iuKK7orvi9h0dHQ="), true);
+    showToast("Wait animation...", true);
     return;
   }
-  if(matchesAliases(norm, fallAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("fall");
-    doFall();
-    input.value="";
-  } else if(matchesAliases(norm, spinAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("spin");
-    doSpin360();
-    input.value="";
-  } else if(matchesAliases(norm, saltoAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("salto");
-    doSomersault();
-    input.value="";
-  } else if(matchesAliases(norm, hitAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("hit");
-    doHit();
-    input.value="";
-  } else if(matchesAliases(norm, invisAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("invis");
-    doInvisibility();
-    input.value="";
-  } else if(matchesAliases(norm, crouchAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("crouch");
-    doCrouch();
-    input.value="";
-  } else if(matchesAliases(norm, jumpAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("jump");
-    doJump();
-    input.value="";
-  } else if(matchesAliases(norm, creeperAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("creeper");
-    doCreeper();
-    input.value="";
-  } else if(matchesAliases(norm, blockAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("block");
-    doBlock();
-    input.value="";
-  } else if(matchesAliases(norm, danceAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("dance");
-    doDance();
-    input.value="";
-  } else if(matchesAliases(norm, crashAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("crash");
-    doCrash();
-    input.value="";
-  } else if(matchesAliases(norm, runAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("run");
-    doRun();
-    input.value="";
-  } else if(matchesAliases(norm, flyAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("fly");
-    doFly();
-    input.value="";
-  } else if(matchesAliases(norm, shakeAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("shake");
-    doShake();
-    input.value="";
-  } else if(matchesAliases(norm, zombieAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("zombie");
-    doZombie();
-    input.value="";
-  } else if(matchesAliases(norm, giantAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("giant");
-    doGiant();
-    input.value="";
-  } else if(matchesAliases(norm, tinyAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("tiny");
-    doTiny();
-    input.value="";
-  } else if(matchesAliases(norm, rainbowAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("rainbow");
-    doRainbow();
-    input.value="";
-  } else if(matchesAliases(norm, ghostAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("ghost");
-    doGhost();
-    input.value="";
-  } else if(matchesAliases(norm, waveAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("wave");
-    doWave();
-    input.value="";
-  } else if(matchesAliases(norm, stormAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("storm");
-    doStorm();
-    input.value="";
-  } else if(matchesAliases(norm, teleportAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("teleport");
-    doTeleport();
-    input.value="";
-  } else if(matchesAliases(norm, cloneAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("clone");
-    doClone();
-    input.value="";
-  } else if(matchesAliases(norm, fireAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("fire");
-    doFire();
-    input.value="";
-  } else if(matchesAliases(norm, waterAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("water");
-    doWater();
-    input.value="";
-  } else if(matchesAliases(norm, iceAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("ice");
-    doIce();
-    input.value="";
-  } else if(matchesAliases(norm, lightningAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("lightning");
-    doLightning();
-    input.value="";
-  } else if(matchesAliases(norm, explosionAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("explosion");
-    doExplosion();
-    input.value="";
-  } else if(matchesAliases(norm, voidAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("void");
-    doVoid();
-    input.value="";
-  } else if(matchesAliases(norm, parkourAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("parkour");
-    doParkour();
-    input.value="";
-  } else if(matchesAliases(norm, discoAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("disco");
-    doDisco();
-    input.value="";
-  } else if(matchesAliases(norm, robotAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("robot");
-    doRobot();
-    input.value="";
-  } else if(matchesAliases(norm, ninjaAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("ninja");
-    doNinja();
-    input.value="";
-  } else if(matchesAliases(norm, spaceAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("space");
-    doSpace();
-    input.value="";
-  } else if(matchesAliases(norm, gravityAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("gravity");
-    doGravity();
-    input.value="";
-  } else if(matchesAliases(norm, magnetAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("magnet");
-    doMagnet();
-    input.value="";
-  } else if(matchesAliases(norm, summonAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("summon");
-    doSummon();
-    input.value="";
-  } else if(matchesAliases(norm, timeAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("time");
-    doTime();
-    input.value="";
-  } else if(matchesAliases(norm, shieldAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("shield");
-    doShield();
-    input.value="";
-  } else if(matchesAliases(norm, bowAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("bow");
-    doBow();
-    input.value="";
-  } else if(matchesAliases(norm, elytraAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("elytra");
-    doElytra();
-    input.value="";
-  } else if(matchesAliases(norm, totemAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("totem");
-    doTotem();
-    input.value="";
-  } else if(matchesAliases(norm, dragonAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("dragon");
-    doDragon();
-    input.value="";
-  } else if(matchesAliases(norm, portalAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("portal");
-    doPortal();
-    input.value="";
-  } else if(matchesAliases(norm, chameleonAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("chameleon");
-    doChameleon();
-    input.value="";
-  } else if(matchesAliases(norm, windAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("wind");
-    doWind();
-    input.value="";
-  } else if(matchesAliases(norm, lavaAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("lava");
-    doLava();
-    input.value="";
-  } else if(matchesAliases(norm, snowAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    unlockAch("snow");
-    doSnow();
-    input.value="";
-  } else if(matchesAliases(norm, resetAliases)){
-    lastCmdNorm=norm; lastCmdTime=now;
-    doReset();
-    input.value="";
-  } else {
-    bar.classList.remove("shake"); void bar.offsetWidth; bar.classList.add("shake");
-    showToast(_u("iseK74riiu2K6Irvi9uL2IrniuqL1XqK4IrkiuaK6orniu6K6mB6")+raw, true);
-  }
+  let proof="";
+  try{ proof = wasmApi.proof ? wasmApi.proof(cmd, now) : ""; }catch(e){}
+  pendingProof = {cmd, proof, ts: now};
+  lastCmdNorm=cmd; lastCmdTime=now;
+  const map={spin:doSpin360, salto:doSomersault, hit:doHit, invis:doInvisibility, crouch:doCrouch, jump:doJump, creeper:doCreeper, fall:doFall, block:doBlock, dance:doDance, crash:doCrash, run:doRun, fly:doFly, shake:doShake, zombie:doZombie, giant:doGiant, tiny:doTiny, rainbow:doRainbow, ghost:doGhost, wave:doWave, storm:doStorm, teleport:doTeleport, clone:doClone, fire:doFire, water:doWater, ice:doIce, lightning:doLightning, explosion:doExplosion, void:doVoid, parkour:doParkour, disco:doDisco, robot:doRobot, ninja:doNinja, space:doSpace, gravity:doGravity, magnet:doMagnet, summon:doSummon, time:doTime, shield:doShield, bow:doBow, elytra:doElytra, totem:doTotem, dragon:doDragon, portal:doPortal, chameleon:doChameleon, wind:doWind, lava:doLava, snow:doSnow, reset:doReset};
+  const fn = map[cmd];
+  if(fn){ fn(); input.value=""; } else { showToast("Not implemented", true); }
 }
-document.getElementById("bookBtn").addEventListener("click", openBook);
-document.getElementById("bookPrev")?.addEventListener("click", ()=>{ if(bookPage>0){ bookPage--; renderBook(); handlePageFlip("prev"); }});
 document.getElementById("bookNext")?.addEventListener("click", ()=>{ const totalPages=Math.max(1,Math.ceil(getAchList().filter(a=>a.done).length/bookPerPage)); if(bookPage<totalPages-1){ bookPage++; renderBook(); handlePageFlip("next"); }});
 document.getElementById("bookReset")?.addEventListener("click", doReset);
 // swipe for book
@@ -3198,3 +3008,12 @@ document.addEventListener("DOMContentLoaded", ()=>{
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

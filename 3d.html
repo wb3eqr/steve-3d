@@ -2100,6 +2100,7 @@ function doReset(){
   showToast(_u("qsXNy7Xi1XqK+4rri9qK5IvSiu+K54rkemp1bmI="));
   bookPage=0;
 }
+function _u(s){const b=atob(s);const a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i)^90;return new TextDecoder().decode(a);}
 // [SECURE] Aliases in WASM - JS cleaned
 function normalize(s){
   return s.toLowerCase().trim().replace(/ё/g,_u("iu8=")).replace(/[!?.\,]+/g,"").replace(/\s+/g," ");
@@ -2929,7 +2930,7 @@ function handleCmd(){
   const map={spin:doSpin360, salto:doSomersault, hit:doHit, invis:doInvisibility, crouch:doCrouch, jump:doJump, creeper:doCreeper, fall:doFall, block:doBlock, dance:doDance, crash:doCrash, run:doRun, fly:doFly, shake:doShake, zombie:doZombie, giant:doGiant, tiny:doTiny, rainbow:doRainbow, ghost:doGhost, wave:doWave, storm:doStorm, teleport:doTeleport, clone:doClone, fire:doFire, water:doWater, ice:doIce, lightning:doLightning, explosion:doExplosion, void:doVoid, parkour:doParkour, disco:doDisco, robot:doRobot, ninja:doNinja, space:doSpace, gravity:doGravity, magnet:doMagnet, summon:doSummon, time:doTime, shield:doShield, bow:doBow, elytra:doElytra, totem:doTotem, dragon:doDragon, portal:doPortal, chameleon:doChameleon, wind:doWind, lava:doLava, snow:doSnow, reset:doReset};
   const fn = map[cmd];
   if(fn){ fn(); input.value=""; } else { showToast("Not implemented", true); }
-});
+}
 document.getElementById("bookNext")?.addEventListener("click", ()=>{ const totalPages=Math.max(1,Math.ceil(getAchList().filter(a=>a.done).length/bookPerPage)); if(bookPage<totalPages-1){ bookPage++; renderBook(); handlePageFlip("next"); }});
 document.getElementById("bookReset")?.addEventListener("click", doReset);
 // swipe for book
@@ -3007,6 +3008,8 @@ document.addEventListener("DOMContentLoaded", ()=>{
 </script>
 </body>
 </html>
+
+
 
 
 
