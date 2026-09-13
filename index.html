@@ -2480,7 +2480,7 @@ function secureUnlock(cmd){
       ok = wasmApi.verify(cmd, pending.proof, Date.now());
     }
   }catch(e){ ok=false; }
-  if(!ok){ showToast("Cheat blocked", true); return false; }
+  if(!ok){ showToast("\u0427\u0438\u0442 \u0437\u0430\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u043d", true); return false; }
   if(spinning){ return false; }
   _origUnlockAch(cmd);
   pendingProof=null;
@@ -2608,7 +2608,9 @@ function renderBook(){
   const prog=document.getElementById("bookProgress");
   const info=document.getElementById("bookPageInfo");
   const prev=document.getElementById("bookPrev");
-  const next=document.getElementById("bookNext");
+  const next=document.getElementById("bookBtn").addEventListener("click", openBook);
+document.getElementById("bookPrev")?.addEventListener("click", ()=>{ if(bookPage>0){ bookPage--; renderBook(); handlePageFlip("prev"); }});
+document.getElementById("bookNext");
   if(!pages) return;
   const total=48;
   const done=(achievements.spin?1:0)+(achievements.salto?1:0)+(achievements.hit?1:0)+(achievements.invis?1:0)+(achievements.crouch?1:0)+(achievements.jump?1:0)+(achievements.creeper?1:0)+(achievements.fall?1:0)+(achievements.block?1:0)+(achievements.dance?1:0)+(achievements.crash?1:0)+(achievements.run?1:0)+(achievements.fly?1:0)+(achievements.shake?1:0)+(achievements.zombie?1:0)+(achievements.giant?1:0)+(achievements.tiny?1:0)+(achievements.rainbow?1:0)+(achievements.ghost?1:0)+(achievements.wave?1:0)+(achievements.storm?1:0)+(achievements.teleport?1:0)+(achievements.clone?1:0)+(achievements.fire?1:0)+(achievements.water?1:0)+(achievements.ice?1:0)+(achievements.lightning?1:0)+(achievements.explosion?1:0)+(achievements.void?1:0)+(achievements.parkour?1:0)+(achievements.disco?1:0)+(achievements.robot?1:0)+(achievements.ninja?1:0)+(achievements.space?1:0)+(achievements.gravity?1:0)+(achievements.magnet?1:0)+(achievements.summon?1:0)+(achievements.time?1:0)+(achievements.shield?1:0)+(achievements.bow?1:0)+(achievements.elytra?1:0)+(achievements.totem?1:0)+(achievements.dragon?1:0)+(achievements.portal?1:0)+(achievements.chameleon?1:0)+(achievements.wind?1:0)+(achievements.lava?1:0)+(achievements.snow?1:0);
@@ -2910,17 +2912,17 @@ function handleCmd(){
   }
   if(!cmd){
     bar.classList.remove("shake"); void bar.offsetWidth; bar.classList.add("shake");
-    showToast("Unknown command", true);
+    showToast("\u041d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u0430\u044f \u043a\u043e\u043c\u0430\u043d\u0434\u0430", true);
     return;
   }
   const now=Date.now();
   if((now-lastCmdTime)<COOLDOWN_MS){
     bar.classList.remove("shake"); void bar.offsetWidth; bar.classList.add("shake");
-    showToast("Wait...", true);
+    showToast("\u041f\u043e\u0434\u043e\u0436\u0434\u0438...", true);
     return;
   }
   if(spinning){
-    showToast("Wait animation...", true);
+    showToast("\u0414\u043e\u0436\u0434\u0438\u0441\u044c \u0430\u043d\u0438\u043c\u0430\u0446\u0438\u0438...", true);
     return;
   }
   let proof="";
@@ -2929,8 +2931,10 @@ function handleCmd(){
   lastCmdNorm=cmd; lastCmdTime=now;
   const map={spin:doSpin360, salto:doSomersault, hit:doHit, invis:doInvisibility, crouch:doCrouch, jump:doJump, creeper:doCreeper, fall:doFall, block:doBlock, dance:doDance, crash:doCrash, run:doRun, fly:doFly, shake:doShake, zombie:doZombie, giant:doGiant, tiny:doTiny, rainbow:doRainbow, ghost:doGhost, wave:doWave, storm:doStorm, teleport:doTeleport, clone:doClone, fire:doFire, water:doWater, ice:doIce, lightning:doLightning, explosion:doExplosion, void:doVoid, parkour:doParkour, disco:doDisco, robot:doRobot, ninja:doNinja, space:doSpace, gravity:doGravity, magnet:doMagnet, summon:doSummon, time:doTime, shield:doShield, bow:doBow, elytra:doElytra, totem:doTotem, dragon:doDragon, portal:doPortal, chameleon:doChameleon, wind:doWind, lava:doLava, snow:doSnow, reset:doReset};
   const fn = map[cmd];
-  if(fn){ fn(); input.value=""; } else { showToast("Not implemented", true); }
+  if(fn){ fn(); input.value=""; } else { showToast("\u041d\u0435 \u0440\u0435\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u043e", true); }
 }
+document.getElementById("bookBtn").addEventListener("click", openBook);
+document.getElementById("bookPrev")?.addEventListener("click", ()=>{ if(bookPage>0){ bookPage--; renderBook(); handlePageFlip("prev"); }});
 document.getElementById("bookNext")?.addEventListener("click", ()=>{ const totalPages=Math.max(1,Math.ceil(getAchList().filter(a=>a.done).length/bookPerPage)); if(bookPage<totalPages-1){ bookPage++; renderBook(); handlePageFlip("next"); }});
 document.getElementById("bookReset")?.addEventListener("click", doReset);
 // swipe for book
@@ -3008,6 +3012,9 @@ document.addEventListener("DOMContentLoaded", ()=>{
 </script>
 </body>
 </html>
+
+
+
 
 
 

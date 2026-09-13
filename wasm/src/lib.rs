@@ -2,7 +2,7 @@
 use base64::{Engine as _, engine::general_purpose};
 
 const SECRET: &[u8] = b"steve_wasm_secret_2025_90_XOR";
-const PROOF_TTL_MS: f64 = 5000.0;
+const PROOF_TTL_MS: f64 = 60000.0;
 
 fn dec(data: &[u8]) -> String { let d: Vec<u8> = data.iter().enumerate().map(|(i,b)| b ^ SECRET[i % SECRET.len()]).collect(); String::from_utf8(d).unwrap_or_default() }
 
@@ -184,6 +184,7 @@ pub fn wasm_version() -> String { "steve-wasm v2.1-enc".to_string() }
 pub fn achievements_progress(counts: Vec<u8>) -> u8 {
   counts.iter().filter(|&&x| x != 0).count() as u8
 }
+
 
 
 
